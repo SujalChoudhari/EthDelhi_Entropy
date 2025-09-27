@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion"; // Using framer-motion as used elsewhere
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -24,8 +24,17 @@ export const Spotlight = ({
   duration = 7,
   xOffset = 100,
 }: SpotlightProps = {}) => {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+  const isDark = resolvedTheme === "dark";
 
   // Define gradients based on theme
   // Dark mode: Subtle saturated blue
@@ -150,8 +159,17 @@ export const Spotlight = ({
 };
 
 export const GridBackground = ({ className }: { className?: string }) => {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+  const isDark = resolvedTheme === "dark";
 
   // Dynamically set stroke color based on theme
   const strokeColor = isDark ? "rgb(255 255 255 / 0.03)" : "rgb(0 0 0 / 0.03)"; // Made slightly more subtle

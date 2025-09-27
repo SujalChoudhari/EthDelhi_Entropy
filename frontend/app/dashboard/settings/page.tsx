@@ -401,7 +401,7 @@ const AppearanceSection = () => {
     const root = document.documentElement;
 
     Object.entries(variables).forEach(([key, value]) => {
-      root.style.setProperty(`--${key}`, value);
+      root.style.setProperty(`--${key}`, `hsl(${value})`);
     });
 
     // Store the theme preference
