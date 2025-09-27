@@ -5,22 +5,37 @@ import { Strategy, DeploymentData } from './types';
 import { Users, TrendingUp, DollarSign, Shield, Zap } from 'lucide-react';
 import StatCard from './StatCard';
 import { updateHappiness } from './api';
+import { useMetamask } from './useMetamask';
+import { useStrategyRatingsContract } from './useStrategyRatingsContract';
 
 interface StrategyModalProps {
   strategy: Strategy | null;
   onClose: () => void;
 }
 
+
+const CONTRACT_ADDRESS = "0x18f0d17cff482835e31b51191c2c260e0db33245"; // Hedera EVM address
+
 const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
   const [deploymentData, setDeploymentData] = useState<DeploymentData>({ budget: '', stopLoss: '' });
   const [userHappiness, setUserHappiness] = useState<number>(0);
   const [hasRated, setHasRated] = useState<boolean>(false);
+  const [onchainRating, setOnchainRating] = useState<{ average: number, count: number } | null>(null);
+  const [onchainLoading, setOnchainLoading] = useState(false);
+  const { account, connect } = useMetamask();
+  const { rate, getRating, loading: contractLoading } = useStrategyRatingsContract(CONTRACT_ADDRESS);
 
   useEffect(() => {
     if (strategy) {
       setDeploymentData({ budget: '', stopLoss: '' });
       setUserHappiness(0);
       setHasRated(false);
+      setOnchainRating(null);
+      setOnchainLoading(true);
+      getRating(strategy.agent_id)
+        .then(setOnchainRating)
+        .catch(() => setOnchainRating(null))
+        .finally(() => setOnchainLoading(false));
     }
   }, [strategy]);
 
@@ -34,9 +49,15 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
   const handleHappinessRating = async (rating: number) => {
     setUserHappiness(rating);
     setHasRated(true);
-    if (strategy && (strategy.agent_id || strategy.id)) {
+    if (strategy && strategy.agent_id) {
       try {
-        await updateHappiness(strategy.agent_id || strategy.id, rating);
+        await updateHappiness(strategy.agent_id, rating); // backend
+      } catch (e) {}
+      try {
+        await connect();
+        await rate(strategy.agent_id, rating); // on-chain
+        const updated = await getRating(strategy.agent_id);
+        setOnchainRating(updated);
       } catch (e) {}
     }
   };
@@ -84,7 +105,7 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
              </div>
           </div>
           
-          {/* Happiness Rating */}
+          {/* Happiness Rating (Backend + On-chain) */}
            <div className="p-4 border border-[--color-border] rounded-lg bg-[--color-secondary]/10">
              <h3 className="text-lg font-semibold mb-3 text-center">Rate Your Experience</h3>
              <div className="flex justify-center items-center space-x-4 mb-2">
@@ -95,6 +116,7 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
                    className={`text-3xl transition-transform hover:scale-110 ${
                      userHappiness >= rating ? 'opacity-100' : 'opacity-40'
                    }`}
+                   disabled={contractLoading}
                  >
                    {rating === 1 ? '😢' : rating === 2 ? '😕' : rating === 3 ? '😐' : rating === 4 ? '😊' : '🤩'}
                  </button>
@@ -102,9 +124,14 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
              </div>
              {hasRated && (
                <div className="text-sm text-center text-[--color-primary] font-medium">
-                 Thanks for rating!
+                 Thanks for rating! (On-chain and backend)
                </div>
              )}
+             <div className="text-xs text-center mt-2">
+               {onchainLoading ? 'Loading on-chain rating...' : onchainRating ? (
+                 <>On-chain avg: <b>{onchainRating.average}</b> ({onchainRating.count} ratings)</>
+               ) : 'No on-chain ratings yet.'}
+             </div>
            </div>
         </div>
 
