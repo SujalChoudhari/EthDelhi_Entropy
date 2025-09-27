@@ -28,6 +28,11 @@ class HappinessUpdate(BaseModel):
     happiness: int
 
 
+# Handle preflight OPTIONS request
+@router.options("/")
+async def options_agents():
+    return {"message": "OK"}
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_agent(payload: AgentCode):
     agent_id = manager.create_agent(

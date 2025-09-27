@@ -34,6 +34,7 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deploying' | 'success' | 'error'>('idle');
   const [code, setCode] = useState(strategyData?.pythonCode || '');
+  const [deployedAgentId, setDeployedAgentId] = useState<string | null>(null);
 
   // Show loading skeleton if no data provided
   if (!strategyData) {
@@ -60,30 +61,46 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
     setDeploymentStatus('deploying');
     
     try {
-      // TODO: Replace with actual API endpoint
-      const response = await fetch('/api/strategies/deploy', {
+      // Deploy to your FastAPI backend
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/agents/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          title,
-          description,
-          pythonCode: code,
-          riskLevel,
-          complexity,
+          code: code,
+          creator: "Entropy User", // You can get this from user context later
+          title: title,
+          summary: description,
+          description: `Risk Level: ${riskLevel}, Complexity: ${complexity}. ${description}`,
+          monthlyFee: estimatedGas ? estimatedGas / 100000 : 0.1, // Convert gas to fee estimate
         }),
       });
 
       if (response.ok) {
+        const result = await response.json();
         setDeploymentStatus('success');
-        toast.success('Strategy deployed successfully!');
+        setDeployedAgentId(result.agent_id);
+        toast.success(`Strategy deployed successfully! Agent ID: ${result.agent_id}`);
+        console.log('Agent deployed:', result);
       } else {
-        throw new Error('Deployment failed');
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || 'Deployment failed');
       }
     } catch (error) {
       setDeploymentStatus('error');
-      toast.error('Failed to deploy strategy. Please try again.');
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Cannot connect to backend. Please ensure the FastAPI server is running on port 8000.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(`Failed to deploy strategy: ${errorMessage}`);
       console.error('Deployment error:', error);
     } finally {
       setIsDeploying(false);
@@ -279,6 +296,11 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
                   <p className="text-xs text-muted-foreground mt-1">
                     Your trading strategy is now live on the Entropy Engine marketplace.
                   </p>
+                  {deployedAgentId && (
+                    <p className="text-xs text-muted-foreground mt-1 font-mono">
+                      Agent ID: <span className="text-primary font-medium">{deployedAgentId}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             </motion.div>
