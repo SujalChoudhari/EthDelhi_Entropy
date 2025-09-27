@@ -167,8 +167,8 @@ export function StrategyRecommender({ onInvest, recommendationData }: StrategyRe
           profile: "",
           asset_class: "",
           time_horizon: "",
-          liquidity: "High",
-          experience: "Intermediate",
+          liquidity: "",
+          experience: "",
           interest: "",
           excludes: []
         }
@@ -184,19 +184,12 @@ export function StrategyRecommender({ onInvest, recommendationData }: StrategyRe
     if (recommendationData && recommendationData.userProfile) {
       handleGetRecommendations();
     }
-  }, [recommendationData]);
+  }, [recommendationData]); // handleGetRecommendations is defined below, so we can ignore the dependency warning
 
   const handleGetRecommendations = async () => {
-    // Set default values for non-scoring fields
-    const profileWithDefaults = {
-      ...userProfile,
-      liquidity: userProfile.liquidity || "High",
-      experience: userProfile.experience || "Intermediate"
-    };
-    
-    // Validate required fields (only the ones that affect scoring)
-    const requiredFields = ['profile', 'asset_class', 'time_horizon', 'interest'];
-    const missingFields = requiredFields.filter(field => !profileWithDefaults[field as keyof UserProfile]);
+    // Validate required fields
+    const requiredFields = ['profile', 'asset_class', 'time_horizon', 'liquidity', 'experience', 'interest'];
+    const missingFields = requiredFields.filter(field => !userProfile[field as keyof UserProfile]);
     
     if (missingFields.length > 0) {
       toast.error("Please fill in all required fields");
@@ -212,7 +205,7 @@ export function StrategyRecommender({ onInvest, recommendationData }: StrategyRe
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(profileWithDefaults),
+        body: JSON.stringify(userProfile),
       });
 
       if (response.ok) {
@@ -336,7 +329,7 @@ export function StrategyRecommender({ onInvest, recommendationData }: StrategyRe
                         <SelectItem value="LargeCapCrypto">Large Cap Crypto</SelectItem>
                         <SelectItem value="MidCapCrypto">Mid Cap Crypto</SelectItem>
                         <SelectItem value="Stablecoins">Stablecoins</SelectItem>
-                        <SelectItem value="DeFi">DeFi</SelectItem>
+                        <SelectItem value="DeFi">DeFi Tokens</SelectItem>
                         <SelectItem value="NFTs">NFTs</SelectItem>
                       </SelectContent>
                     </Select>
@@ -359,7 +352,40 @@ export function StrategyRecommender({ onInvest, recommendationData }: StrategyRe
                     </Select>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="liquidity">Liquidity Preference *</Label>
+                    <Select
+                      onValueChange={(value) => setUserProfile({...userProfile, liquidity: value})}
+                      value={userProfile.liquidity}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select liquidity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="High">High Liquidity</SelectItem>
+                        <SelectItem value="Medium">Medium Liquidity</SelectItem>
+                        <SelectItem value="Low">Low Liquidity</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="experience">Trading Experience *</Label>
+                    <Select
+                      onValueChange={(value) => setUserProfile({...userProfile, experience: value})}
+                      value={userProfile.experience}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select experience level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Beginner">Beginner</SelectItem>
+                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                        <SelectItem value="Advanced">Advanced</SelectItem>
+                        <SelectItem value="Expert">Expert</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="interest">Technical Indicator Interest *</Label>
