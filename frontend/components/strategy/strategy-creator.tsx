@@ -11,7 +11,8 @@ import {
   AlertCircle, 
   Copy,
   Download,
-  Play
+  Play,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
@@ -35,6 +36,8 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
   const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deploying' | 'success' | 'error'>('idle');
   const [code, setCode] = useState(strategyData?.pythonCode || '');
   const [deployedAgentId, setDeployedAgentId] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  const [startStatus, setStartStatus] = useState<'idle' | 'starting' | 'running' | 'error'>('idle');
 
   // Show loading skeleton if no data provided
   if (!strategyData) {
@@ -104,6 +107,52 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
       console.error('Deployment error:', error);
     } finally {
       setIsDeploying(false);
+    }
+  };
+
+  const handleStartStrategy = async () => {
+    if (!deployedAgentId) {
+      toast.error('Please deploy the strategy first');
+      return;
+    }
+
+    setIsStarting(true);
+    setStartStatus('starting');
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/agents/${deployedAgentId}/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setStartStatus('running');
+        toast.success(`Strategy started successfully! ${result.message}`);
+        console.log('Agent started:', result);
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(errorData.detail || 'Failed to start agent');
+      }
+    } catch (error) {
+      setStartStatus('error');
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Cannot connect to backend. Please ensure the FastAPI server is running on port 8000.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(`Failed to start strategy: ${errorMessage}`);
+      console.error('Start strategy error:', error);
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -232,22 +281,38 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Test Button */}
+            {/* Start Strategy Button */}
             <Button
-              variant="outline"
+              onClick={handleStartStrategy}
+              variant="default"
               className="flex-1 h-12 text-sm font-medium"
-              disabled={isDeploying || !code.trim()}
+              disabled={isDeploying || !code.trim() || deploymentStatus !== 'success' || isStarting || startStatus === 'running'}
             >
-              <Play className="h-4 w-4 mr-2" />
-              Test Strategy
+              {isStarting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Starting...
+                </>
+              ) : startStatus === 'running' ? (
+                <>
+                  <div className="h-2 w-2 mr-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Running
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-2" />
+                  Start Strategy
+                </>
+              )}
             </Button>
 
             {/* Deploy Button */}
+            {/* Add code validation */}
             <Button
               onClick={handleDeploy}
               disabled={isDeploying || !code.trim() || deploymentStatus === 'success'}
               className="flex-1 h-12 text-sm font-medium"
-              variant={deploymentStatus === 'success' ? 'default' : deploymentStatus === 'error' ? 'destructive' : 'default'}
+              variant={deploymentStatus === 'success' ? 'secondary' : deploymentStatus === 'error' ? 'destructive' : 'secondary'}
             >
               {deploymentStatus === 'deploying' && (
                 <>
@@ -301,6 +366,47 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
                       Agent ID: <span className="text-primary font-medium">{deployedAgentId}</span>
                     </p>
                   )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Start Strategy Status Messages */}
+          {startStatus === 'running' && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg"
+            >
+              <div className="flex items-center">
+                <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse mr-3"></div>
+                <div>
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    Strategy Running
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    Your trading strategy is actively executing trades.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {startStatus === 'error' && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg"
+            >
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                    Failed to Start Strategy
+                  </p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    Please check your backend connection and try again.
+                  </p>
                 </div>
               </div>
             </motion.div>

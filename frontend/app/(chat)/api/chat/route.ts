@@ -7,6 +7,7 @@ import {
   generateAccountOptions,
   generateAppointmentDetails,
   generateTradingStrategy,
+  generateStrategyRecommendations,
 } from "@/ai/actions";
 import { generateUUID, saveChat, getChatById } from "@/lib/utils";
 
@@ -134,6 +135,16 @@ export async function POST(request: Request) {
               suggestedTime: "10:00 AM"
             };
           }
+        },
+      },
+      getStrategyRecommendations: {
+        description: "Get personalized trading strategy recommendations based on user preferences and queries like 'recommend strategies', 'show me top strategies', 'find good trading strategies'",
+        parameters: z.object({
+          userQuery: z.string().describe("The user's query about strategy recommendations"),
+        }),
+        execute: async ({ userQuery }) => {
+          const recommendationData = await generateStrategyRecommendations(userQuery);
+          return recommendationData;
         },
       },
       createTradingStrategy: {

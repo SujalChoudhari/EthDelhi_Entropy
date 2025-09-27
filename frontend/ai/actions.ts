@@ -45,6 +45,42 @@ export async function generateAccountOptions() {
   ];
 }
 
+export async function generateStrategyRecommendations(userQuery: string) {
+  const { object: recommendationData } = await generateObject({
+    model: geminiFlashModel,
+    prompt: `
+      Based on the user query: "${userQuery}"
+      
+      Generate a user profile and explanation for trading strategy recommendations.
+      The user is asking for strategy recommendations, so create a realistic profile 
+      that matches their request. Consider their risk tolerance, experience level,
+      and preferences mentioned in the query.
+    `,
+    schema: z.object({
+      userProfile: z.object({
+        profile: z.enum(["Conservative", "Moderate", "Aggressive", "High-Degenerate"])
+          .describe("Risk profile based on user query"),
+        asset_class: z.enum(["LargeCapCrypto", "MidCapCrypto", "Stablecoins", "DeFi", "NFTs"])
+          .describe("Preferred asset class"),
+        time_horizon: z.enum(["Short-term", "Medium-term", "Long-term"])
+          .describe("Investment time horizon"),
+        liquidity: z.enum(["High", "Medium", "Low"])
+          .describe("Liquidity preference"),
+        experience: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"])
+          .describe("Trading experience level"),
+        interest: z.enum(["RSI", "MACD", "VWAP", "Stochastic"])
+          .describe("Technical indicator preference"),
+      }),
+      explanation: z.string()
+        .describe("Brief explanation of why this profile was selected based on the user's query"),
+      title: z.string()
+        .describe("A catchy title for the recommendation request"),
+    }),
+  });
+
+  return recommendationData;
+}
+
 
 
 export async function generateAppointmentDetails(subject: string, context?: string) {
