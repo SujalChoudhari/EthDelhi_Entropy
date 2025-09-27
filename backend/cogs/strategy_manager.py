@@ -3,6 +3,8 @@ import uuid
 from multiprocessing import Process, Queue
 from multiprocessing.queues import Queue as QueueType
 import logging
+import subprocess
+import os
 
 from .database import AgentDatabase  # <-- Add this import
 
@@ -57,6 +59,8 @@ class StrategyManager:
                 "status": "stopped",
                 "agentverse_id": row.get("agentverse_id"),
             }
+        
+        self.running_agents = {}
 
     def create_agent(self, code: str, agentverse_id: str = None) -> str:
         agent_id = str(uuid.uuid4())
@@ -150,3 +154,34 @@ class StrategyManager:
                 break
             logs.append(chunk)
         return "".join(logs) if logs else ""
+    
+    def deploy_agent(self, agent_id: str):
+        agent = self.get_agent(agent_id)
+        python_code = agent['code']
+
+        script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts", "run_python.sh")
+
+        subprocess.run([script_path, f"{agent_id}.py", python_code], cwd=os.path.dirname(os.path.dirname(__file__)))
+
+        process = subprocess.Popen(
+            [sys.executable, f"{agent_id}.py"],
+            cwd=os.path.dirname(os.path.dirname(__file__)),
+            start_new_session=True       
+        )
+
+        self.running_agents[agent_id] = process
+
+        return True
+
+    def stop_agent(self, agent_id: str):
+        process = self.running_agents.get(agent_id)
+        if process:
+            process.terminate()  
+            process.wait()      
+            del self.running_agents[agent_id]
+            return True
+        return False
+
+    def is_running(self, agent_id: str):
+        process = self.running_agents.get(agent_id)
+        return process and process.poll() is None

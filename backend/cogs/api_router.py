@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from cogs.strategy_manager import StrategyManager
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 manager = StrategyManager()
-
 
 class AgentCode(BaseModel):
     code: str
@@ -62,3 +62,13 @@ async def get_logs(agent_id: str):
     if logs is None:
         raise HTTPException(status_code=404, detail="Agent not found or not running")
     return {"agent_id": agent_id, "logs": logs}
+
+@router.post("/deploy")
+async def deploy_agent(agent_id: str):
+    if not manager.deploy_agent(agent_id):
+        raise HTTPException(status_code=404, detail="Agent Not Found")
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"agent_id": agent_id, "status": "deployed"}
+    )
