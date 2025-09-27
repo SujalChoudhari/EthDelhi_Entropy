@@ -30,7 +30,7 @@ export const Message = ({
 
   return (
     <motion.div
-      className={`flex flex-row gap-3 px-4 w-full md:w-[600px] md:px-0 first-of-type:pt-20 mb-4`}
+      className={`flex flex-row gap-3 px-4 w-full md:w-[850px] md:px-0 first-of-type:pt-20 mb-4`}
       initial={{ y: 10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
@@ -61,7 +61,7 @@ export const Message = ({
         )}
 
         {toolInvocations && (
-          <div className={`flex flex-col gap-4 ${!isAssistant && "items-end"}`}>
+          <div className={`flex flex-col gap-4 max-w-[90%] ${!isAssistant && "items-end"}`}>
             {toolInvocations.map((toolInvocation, index) => {
               const { toolName, toolCallId, state } = toolInvocation;
 

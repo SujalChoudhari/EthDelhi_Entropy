@@ -189,7 +189,7 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
 
   return (
     <motion.div 
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-6xl mx-auto"
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3 }}
