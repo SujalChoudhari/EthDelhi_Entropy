@@ -7,20 +7,9 @@ import { Markdown } from "./markdown";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
 import { AccountBalance } from "../bank/account-balance";
-import { AuthorizePayment } from "../flights/authorize-payment";
-import { DisplayBoardingPass } from "../flights/boarding-pass";
-import { CreateReservation } from "../flights/create-reservation";
-import { FlightStatus } from "../flights/flight-status";
-import { ListFlights } from "../flights/list-flights";
-import { SelectSeats } from "../flights/select-seats";
-import { VerifyPayment } from "../flights/verify-payment";
 import { Bot, User } from "lucide-react";
 import { TransferMoney } from "../bank/transfer-money";
-import { LoanStatus } from "../bank/loan-status";
-import { BranchTimings } from "../bank/branch-timings";
 import { BankAppointment } from "../bank/bank-appointment";
-import { AppointmentStatus } from "../bank/appointment-status";
-import { SupportCallButton } from "../bank/video-call";
 
 export const Message = ({
   chatId,
@@ -87,36 +76,12 @@ export const Message = ({
                   >
                     {toolName === "getWeather" ? (
                       <Weather weatherAtLocation={result} />
-                    ) : toolName === "displayFlightStatus" ? (
-                      <FlightStatus flightStatus={result} />
-                    ) : toolName === "searchFlights" ? (
-                      <ListFlights chatId={chatId} results={result} />
-                    ) : toolName === "selectSeats" ? (
-                      <SelectSeats chatId={chatId} availability={result} />
-                    ) : toolName === "createReservation" ? (
-                      Object.keys(result).includes("error") ? null : (
-                        <CreateReservation reservation={result} />
-                      )
-                    ) : toolName === "authorizePayment" ? (
-                      <AuthorizePayment intent={result} />
-                    ) : toolName === "displayBoardingPass" ? (
-                      <DisplayBoardingPass boardingPass={result} />
-                    ) : toolName === "verifyPayment" ? (
-                      <VerifyPayment result={result} />
                     ) : toolName === "checkAccountBalance" ? (
                       <AccountBalance balanceData={result} />
                     ) : toolName === "transferMoney" ? (
                       <TransferMoney transferData={result} />
-                    ) : toolName === "checkLoanStatus" ? (
-                      <LoanStatus loanData={result} />
-                    ) : toolName === "checkBranchTimings" ? (
-                      <BranchTimings branchData={result} />
                     ) : toolName === "scheduleAppointment" ? (
                       <BankAppointment appointmentData={result} />
-                    ) : toolName === "checkAppointmentStatus" ? (
-                      <AppointmentStatus statusData={result} />
-                    ) : toolName === "startVideoCall" ? (
-                      <SupportCallButton supportUrl={result.supportUrl} />
                     ) : (
                       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg">
                         {JSON.stringify(result, null, 2)}
@@ -142,32 +107,12 @@ export const Message = ({
                   >
                     {toolName === "getWeather" ? (
                       <Weather />
-                    ) : toolName === "displayFlightStatus" ? (
-                      <FlightStatus />
-                    ) : toolName === "searchFlights" ? (
-                      <ListFlights chatId={chatId} />
-                    ) : toolName === "selectSeats" ? (
-                      <SelectSeats chatId={chatId} />
-                    ) : toolName === "createReservation" ? (
-                      <CreateReservation />
-                    ) : toolName === "authorizePayment" ? (
-                      <AuthorizePayment />
-                    ) : toolName === "displayBoardingPass" ? (
-                      <DisplayBoardingPass />
                     ) : toolName === "checkAccountBalance" ? (
                       <AccountBalance />
                     ) : toolName === "transferMoney" ? (
                       <TransferMoney />
-                    ) : toolName === "checkLoanStatus" ? (
-                      <LoanStatus />
-                    ) : toolName === "checkBranchTimings" ? (
-                      <BranchTimings />
                     ) : toolName === "scheduleAppointment" ? (
                       <BankAppointment />
-                    ) : toolName === "checkAppointmentStatus" ? (
-                      <AppointmentStatus />
-                    ) : toolName === "startVideoCall" ? (
-                      <SupportCallButton isLoading={true} />
                     ) : <div className="h-20 bg-muted/70 animate-pulse rounded-lg" />}
                   </motion.div>
                 );

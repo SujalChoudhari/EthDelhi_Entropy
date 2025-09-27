@@ -3,15 +3,8 @@ import { z } from "zod";
 
 import { geminiFlashModel } from "@/ai";
 import {
-  generateReservationPrice,
-  generateSampleFlightSearchResults,
-  generateSampleFlightStatus,
-  generateSampleSeatSelection,
   generateSampleAccountBalance,
   generateAccountOptions,
-  generateLoanData,
-  generateBranchTimings,
-  generateAppointmentData,
   generateAppointmentDetails,
 } from "@/ai/actions";
 import { generateUUID, saveChat, getChatById } from "@/lib/utils";
@@ -41,19 +34,11 @@ export async function POST(request: Request) {
   - you can transfer money between accounts or to other people
   - for money transfers, ask for recipient name and amount if not specified
   - remind users they'll need their device password to complete transfers
-  - you can check loan status to show installment dates and details
-  - respond to queries like "When is my next installment?" or "my loans" by checking loan status
-  - you can check branch timings and availability
-  - respond to queries like "Is bank open today?" or "When do banks open?" by checking branch timings
   - you can schedule appointments for banking services
   - when scheduling appointments, extract details from the chat history
   - if user doesn't specify a date, time, or details, proactively ask for this information
   - always try to suggest a complete appointment with subject, details, date and time based on context
   - respond to queries like "I want an appointment for creating a current account" or "I want a personal loan" by scheduling an appointment
-  - you can check appointment status
-  - respond to queries like "What happened to my inquiry?" or "Any updates for me?" by checking appointment status
-  - you can initiate video calls with customer support
-  - respond to queries like "I need to talk to someone" or "Can I speak with support?" by starting a video call
 
  If there query is very vague and they dont mention what type of loan then suggest below type of availble loans we have and prompt them to choose.
 
@@ -120,143 +105,7 @@ export async function POST(request: Request) {
           return weatherData;
         },
       },
-      displayFlightStatus: {
-        description: "Display the status of a flight",
-        parameters: z.object({
-          flightNumber: z.string().describe("Flight number"),
-          date: z.string().describe("Date of the flight"),
-        }),
-        execute: async ({ flightNumber, date }) => {
-          const flightStatus = await generateSampleFlightStatus({
-            flightNumber,
-            date,
-          });
 
-          return flightStatus;
-        },
-      },
-      searchFlights: {
-        description: "Search for flights based on the given parameters",
-        parameters: z.object({
-          origin: z.string().describe("Origin airport or city"),
-          destination: z.string().describe("Destination airport or city"),
-        }),
-        execute: async ({ origin, destination }) => {
-          const results = await generateSampleFlightSearchResults({
-            origin,
-            destination,
-          });
-
-          return results;
-        },
-      },
-      selectSeats: {
-        description: "Select seats for a flight",
-        parameters: z.object({
-          flightNumber: z.string().describe("Flight number"),
-        }),
-        execute: async ({ flightNumber }) => {
-          const seats = await generateSampleSeatSelection({ flightNumber });
-          return seats;
-        },
-      },
-      createReservation: {
-        description: "Display pending reservation details",
-        parameters: z.object({
-          seats: z.string().array().describe("Array of selected seat numbers"),
-          flightNumber: z.string().describe("Flight number"),
-          departure: z.object({
-            cityName: z.string().describe("Name of the departure city"),
-            airportCode: z.string().describe("Code of the departure airport"),
-            timestamp: z.string().describe("ISO 8601 date of departure"),
-            gate: z.string().describe("Departure gate"),
-            terminal: z.string().describe("Departure terminal"),
-          }),
-          arrival: z.object({
-            cityName: z.string().describe("Name of the arrival city"),
-            airportCode: z.string().describe("Code of the arrival airport"),
-            timestamp: z.string().describe("ISO 8601 date of arrival"),
-            gate: z.string().describe("Arrival gate"),
-            terminal: z.string().describe("Arrival terminal"),
-          }),
-          passengerName: z.string().describe("Name of the passenger"),
-        }),
-        execute: async (props) => {
-          const result = await generateReservationPrice(props);
-          const totalPriceInUSD = result.totalPriceInUSD;
-
-          const id = generateUUID();
-
-          const reservations = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('reservations') || '[]') : [];
-          const reservation = { 
-            id, 
-            userId: 'dummy-user-id', 
-            details: { ...props, totalPriceInUSD } 
-          };
-          
-          reservations.push(reservation);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('reservations', JSON.stringify(reservations));
-          }
-
-          return { id, ...props, totalPriceInUSD };
-        },
-      },
-      authorizePayment: {
-        description:
-          "User will enter credentials to authorize payment, wait for user to repond when they are done",
-        parameters: z.object({
-          reservationId: z
-            .string()
-            .describe("Unique identifier for the reservation"),
-        }),
-        execute: async ({ reservationId }) => {
-          return { reservationId };
-        },
-      },
-      verifyPayment: {
-        description: "Verify payment status",
-        parameters: z.object({
-          reservationId: z
-            .string()
-            .describe("Unique identifier for the reservation"),
-        }),
-        execute: async ({  }) => {
-          return { hasCompletedPayment: true };
-        },
-      },
-      displayBoardingPass: {
-        description: "Display a boarding pass",
-        parameters: z.object({
-          reservationId: z
-            .string()
-            .describe("Unique identifier for the reservation"),
-          passengerName: z
-            .string()
-            .describe("Name of the passenger, in title case"),
-          flightNumber: z.string().describe("Flight number"),
-          seat: z.string().describe("Seat number"),
-          departure: z.object({
-            cityName: z.string().describe("Name of the departure city"),
-            airportCode: z.string().describe("Code of the departure airport"),
-            airportName: z.string().describe("Name of the departure airport"),
-            timestamp: z.string().describe("ISO 8601 date of departure"),
-            terminal: z.string().describe("Departure terminal"),
-            gate: z.string().describe("Departure gate"),
-          }),
-          arrival: z.object({
-            cityName: z.string().describe("Name of the arrival city"),
-            airportCode: z.string().describe("Code of the arrival airport"),
-            airportName: z.string().describe("Name of the arrival airport"),
-            timestamp: z.string().describe("ISO 8601 date of arrival"),
-            terminal: z.string().describe("Arrival terminal"),
-            gate: z.string().describe("Arrival gate"),
-          }),
-        }),
-        execute: async (boardingPass) => {
-          return boardingPass;
-        },
-      },
       transferMoney: {
         description: "Transfer money to another account",
         parameters: z.object({
@@ -268,26 +117,7 @@ export async function POST(request: Request) {
           return { recipientName, amount, accountOptions };
         },
       },
-      checkLoanStatus: {
-        description: "Check status of the user's loans",
-        parameters: z.object({
-          dummy: z.string().optional().describe("Optional parameter, not used")
-        }),
-        execute: async () => {
-          const loanData = await generateLoanData();
-          return loanData;
-        },
-      },
-      checkBranchTimings: {
-        description: "Check bank branch timings and availability",
-        parameters: z.object({
-          branchId: z.string().optional().describe("Optional branch ID to check specific branch")
-        }),
-        execute: async ({ branchId }) => {
-          const branchData = await generateBranchTimings(branchId);
-          return branchData;
-        },
-      },
+
       scheduleAppointment: {
         description: "Schedule an appointment with the bank",
         parameters: z.object({
@@ -335,42 +165,13 @@ export async function POST(request: Request) {
           }
         },
       },
-      checkAppointmentStatus: {
-        description: "Check status of user's bank appointments",
-        parameters: z.object({
-          appointmentId: z.string().optional().describe("Optional appointment ID to check specific appointment")
-        }),
-        execute: async ({ appointmentId }) => {
-          const appointments = await generateAppointmentData();
-          return { 
-            appointments,
-            selectedAppointmentId: appointmentId
-          };
-        },
-      },
-      startVideoCall: {
-        description: "Start a video call with customer support",
-        parameters: z.object({
-          reason: z.string().optional().describe("Optional reason for the call")
-        }),
-        execute: async ({ reason }) => {
-          // Generate a unique room ID for each call
-          const roomId = `support-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
-          const supportUrl = `https://chat.1410inc.xyz/?room=${roomId}`;
-          
-          return { 
-            supportUrl,
-            reason: reason || "Customer Support",
-            timestamp: new Date().toISOString()
-          };
-        },
-      },
+
     },
-    onFinish: async (result: { messages: ResponseMessage[] }) => {
+    onFinish: async (event) => {
       try {
         await saveChat({
           id,
-          messages: [...coreMessages, ...result.messages],
+          messages: [...coreMessages, ...event.response.messages],
         });
       } catch (error: unknown) {
         console.error("Failed to save chat:", error instanceof Error ? error.message : "Unknown error");
