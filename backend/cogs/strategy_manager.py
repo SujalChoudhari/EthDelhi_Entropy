@@ -1,5 +1,7 @@
 import sys
 import uuid
+import re
+import time
 from multiprocessing import Process, Queue
 from multiprocessing.queues import Queue as QueueType
 import logging
@@ -45,8 +47,7 @@ class StrategyManager:
 
     def __init__(self):
         self.agents = {}
-        self.db = AgentDatabase()  # <-- Add database instance
-
+        self.db = AgentDatabase()
         # Load agents from DB at startup
         for row in self.db.list_agents():
             agent_id = row["agent_id"]
@@ -56,9 +57,35 @@ class StrategyManager:
                 "queue": None,
                 "status": "stopped",
                 "agentverse_id": row.get("agentverse_id"),
+                "creator": row.get("creator"),
+                "title": row.get("title"),
+                "summary": row.get("summary"),
+                "description": row.get("description"),
+                "happiness": row.get("happiness", 0),
+                "users": row.get("users", 0),
+                "profitUsers": row.get("profitUsers", 0),
+                "avgStopLoss": row.get("avgStopLoss", 0),
+                "avgGains": row.get("avgGains", 0),
+                "successRate": row.get("successRate", 0),
+                "monthlyFee": row.get("monthlyFee", 0)
             }
 
-    def create_agent(self, code: str, agentverse_id: str = None) -> str:
+    def create_agent(
+        self,
+        code: str,
+        agentverse_id: str = None,
+        creator: str = None,
+        title: str = None,
+        summary: str = None,
+        description: str = None,
+        happiness: int = 0,
+        users: int = 0,
+        profitUsers: int = 0,
+        avgStopLoss: float = 0,
+        avgGains: float = 0,
+        successRate: float = 0,
+        monthlyFee: float = 0
+    ) -> str:
         agent_id = str(uuid.uuid4())
         self.agents[agent_id] = {
             "code": code,
@@ -66,8 +93,21 @@ class StrategyManager:
             "queue": None,
             "status": "stopped",
             "agentverse_id": agentverse_id,
+            "creator": creator,
+            "title": title,
+            "summary": summary,
+            "description": description,
+            "happiness": happiness,
+            "users": users,
+            "profitUsers": profitUsers,
+            "avgStopLoss": avgStopLoss,
+            "avgGains": avgGains,
+            "successRate": successRate,
+            "monthlyFee": monthlyFee
         }
-        self.db.add_agent(agent_id, code, agentverse_id)  # <-- Persist to DB
+        self.db.add_agent(
+            agent_id, code, agentverse_id, creator, title, summary, description, happiness, users, profitUsers, avgStopLoss, avgGains, successRate, monthlyFee
+        )
         return agent_id
 
     def start_agent(self, agent_id: str) -> bool:
@@ -134,8 +174,17 @@ class StrategyManager:
             "agentverse_id": agent.get("agentverse_id"),
         }
 
-    def list_agents(self) -> list:
-        return [self.get_agent(agent_id) for agent_id in self.agents]
+    def list_agents(self, search: str = None) -> list:
+        # Use DB for search and listing
+        agents = self.db.list_agents(search=search)
+        return agents
+    def update_happiness(self, agent_id: str, happiness: int) -> bool:
+        agent = self.agents.get(agent_id)
+        if not agent:
+            return False
+        agent["happiness"] = happiness
+        self.db.update_happiness(agent_id, happiness)
+        return True
 
     def get_logs(self, agent_id: str) -> str | None:
         agent = self.agents.get(agent_id)
@@ -150,3 +199,46 @@ class StrategyManager:
                 break
             logs.append(chunk)
         return "".join(logs) if logs else ""
+    
+
+    
+    def get_agent_address(self, agent_id: str, timeout: float = 10.0) -> str | None:
+        """
+        Deploys the agent, captures its address from logs, then stops the agent.
+        The agent must print its address (agent1q...) to stdout on startup.
+        If no address is found, returns the logs instead.
+        """
+        agent = self.agents.get(agent_id)
+        if not agent:
+            return None
+
+        # Start agent if not running
+        if agent["status"] != "running":
+            self.start_agent(agent_id)
+            started_here = True
+        else:
+            started_here = False
+
+        address = None
+        logs = ""
+        pattern = re.compile(r"\b(agent1q\w+)\b")
+        start_time = time.time()
+
+        # Poll logs for address
+        while time.time() - start_time < timeout:
+            logs = self.get_logs(agent_id) or ""
+            match = pattern.search(logs)
+            if match:
+                address = match.group(1)
+                break
+            time.sleep(0.2)
+
+        # Stop agent if we started it
+        if started_here:
+            self.stop_agent(agent_id)
+
+        print("logs: ",logs)
+        if address:
+            return address
+        else:
+            return logs  # Return logs if no address found
