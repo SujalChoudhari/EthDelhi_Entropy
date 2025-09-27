@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useMetamask } from "@/hooks/useMetamask";
+import MetamaskTrigger from "@/components/metamask-trigger";
 
 export default function Home() {
-  const { account, connect, disconnect } = useMetamask();
+  const { account, connect } = useMetamask();
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   useEffect(() => {
@@ -265,6 +266,8 @@ export default function Home() {
           onClick={() => setShowAccountMenu(false)}
         />
       )}
+
+      <MetamaskTrigger/>
     </div>
   );
 }
