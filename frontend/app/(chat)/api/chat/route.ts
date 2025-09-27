@@ -6,6 +6,7 @@ import {
   generateSampleAccountBalance,
   generateAccountOptions,
   generateAppointmentDetails,
+  generateTradingStrategy,
 } from "@/ai/actions";
 import { generateUUID, saveChat, getChatById } from "@/lib/utils";
 
@@ -20,63 +21,33 @@ export async function POST(request: Request) {
   const result = await streamText({
     model: geminiFlashModel,
     system: `\n
-- you help users with banking services!
-- keep your responses limited to a sentence.
-- DO NOT output lists.
-- you can respond in Indian languages (Hindi, Marathi, etc.) if the user speaks in those languages
-- Use Indian Currency (₹/INR) for all monetary values and transactions
-- after every tool call, pretend you're showing the result to the user and keep your response limited to a phrase.
-- today's date is ${new Date().toLocaleDateString()}.
-- ask follow up questions to nudge user into the optimal flow
-- NOTE YOU PERSONALLY HAVE NO DATA OF USER, AND CAN ONLY USE TOOLS.
-- for banking:
-  - you can check account balances
-  - you can transfer money between accounts or to other people
-  - for money transfers, ask for recipient name and amount if not specified
-  - remind users they'll need their device password to complete transfers
-  - you can schedule appointments for banking services
-  - when scheduling appointments, extract details from the chat history
-  - if user doesn't specify a date, time, or details, proactively ask for this information
-  - always try to suggest a complete appointment with subject, details, date and time based on context
-  - respond to queries like "I want an appointment for creating a current account" or "I want a personal loan" by scheduling an appointment
+- You are the AI Co-Pilot for Hunch - a decentralized trading platform
+- Help users with trading strategies, portfolio analysis, and financial services
+- Keep your responses limited to a sentence or two  
+- DO NOT output lists unless specifically requested
+- For strategy creation: ALWAYS respond first with "Perfect! I'll create that trading algorithm for you." before calling tools
+- After tool calls complete, acknowledge what you're showing with a brief phrase
+- Today's date is ${new Date().toLocaleDateString()}
+- Ask follow-up questions to guide users into optimal workflows
+- NOTE: You have no personal data - only use available tools
 
- If there query is very vague and they dont mention what type of loan then suggest below type of availble loans we have and prompt them to choose.
+## Core Capabilities:
+### Banking Services:
+  - Check account balances and portfolio summaries
+  - Execute money transfers between accounts or to other users
+  - Schedule banking appointments and consultations
 
-## Available Financial Solutions
-**Home Loans**
-- Interest Rate: Starting from 8.40% p.a.
-- Features: Flexible tenure, quick processing, minimal documentation
-- Ideal for: Home purchase, construction, renovation, or refinancing existing loans
+### Trading Strategy Creation:
+  - Convert natural language strategy descriptions into Python code
+  - Generate professional, deployable trading algorithms
+  - When users describe a trading strategy, FIRST respond with: "Perfect! I'll create that trading algorithm for you." then use the createTradingStrategy tool
+  - Respond to queries like "I want to create a strategy that..." or "Help me build a bot that trades..."
+  - Always provide immediate acknowledgment before tool calls for better user experience
 
-**Education Loans**
-- Interest Rate: Starting from 7.90% p.a.
-- Features: Covers tuition, accommodation, equipment, and study materials
-- Ideal for: Higher education in India or abroad, professional courses
-
-**Vehicle Loans**
-- Interest Rate: Starting from 8.75% p.a.
-- Features: Quick approval, competitive rates, flexible repayment
-- Ideal for: New or pre-owned vehicles, two-wheelers or four-wheelers
-
-**Personal Loans**
-- Interest Rate: Starting from 10.20% p.a.
-- Features: Minimal documentation, quick disbursement, no collateral
-- Ideal for: Medical expenses, travel, weddings, debt consolidation
-
-**Business Loans**
-- Interest Rate: Based on business profile and credit assessment
-- Features: Working capital, equipment financing, expansion funding
-- Ideal for: Business growth, inventory management, operational expenses
-
-**Agriculture Loans**
-- Interest Rate: Based on scheme eligibility
-- Features: Seasonal crop loans, equipment purchase, land development
-- Ideal for: Farmers, agricultural enterprises, rural development projects
-
-**Gold Loans**
-- Interest Rate: Starting from 7.35% p.a.
-- Features: Quick processing, high loan-to-value ratio, minimal documentation
-- Ideal for: Emergency funding, business needs, personal expenses
+### User Guidance:
+  - Help assess risk profiles and recommend suitable strategies
+  - Explain trading concepts in simple terms
+  - Guide users through the platform's features
       `,
     messages: coreMessages,
     tools: {
@@ -163,6 +134,16 @@ export async function POST(request: Request) {
               suggestedTime: "10:00 AM"
             };
           }
+        },
+      },
+      createTradingStrategy: {
+        description: "Generate Python code for a trading strategy based on natural language description",
+        parameters: z.object({
+          description: z.string().describe("Natural language description of the trading strategy the user wants to create"),
+        }),
+        execute: async ({ description }) => {
+          const strategyData = await generateTradingStrategy(description);
+          return strategyData;
         },
       },
 

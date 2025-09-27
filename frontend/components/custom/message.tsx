@@ -10,6 +10,7 @@ import { AccountBalance } from "../bank/account-balance";
 import { Bot, User } from "lucide-react";
 import { TransferMoney } from "../bank/transfer-money";
 import { BankAppointment } from "../bank/bank-appointment";
+import { StrategyCreator } from "../strategy/strategy-creator";
 
 export const Message = ({
   chatId,
@@ -82,6 +83,8 @@ export const Message = ({
                       <TransferMoney transferData={result} />
                     ) : toolName === "scheduleAppointment" ? (
                       <BankAppointment appointmentData={result} />
+                    ) : toolName === "createTradingStrategy" ? (
+                      <StrategyCreator strategyData={result} />
                     ) : (
                       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg">
                         {JSON.stringify(result, null, 2)}
@@ -113,6 +116,8 @@ export const Message = ({
                       <TransferMoney />
                     ) : toolName === "scheduleAppointment" ? (
                       <BankAppointment />
+                    ) : toolName === "createTradingStrategy" ? (
+                      <StrategyCreator />
                     ) : <div className="h-20 bg-muted/70 animate-pulse rounded-lg" />}
                   </motion.div>
                 );

@@ -65,3 +65,32 @@ export async function generateAppointmentDetails(subject: string, context?: stri
 
   return appointmentDetails;
 }
+
+export async function generateTradingStrategy(description: string) {
+  const { object: strategyData } = await generateObject({
+    model: geminiFlashModel,
+    prompt: `Based on this trading strategy description: "${description}"
+    
+    Generate a complete Python trading strategy using the ASI uAgent framework. The strategy should:
+    1. It should be without comments and clean.
+    2. Include proper error handling and risk management
+    3. Use realistic trading logic based on the description
+    4. Follow Python best practices
+    5. Include imports for common trading libraries (pandas, numpy, etc.)
+    6. Have clear entry and exit signals
+    
+    Make the code professional and deployable on a decentralized trading platform.`,
+    schema: z.object({
+      title: z.string().describe("A clear, concise title for the strategy"),
+      description: z.string().describe("A refined description of what the strategy does"),
+      riskLevel: z.enum(["Low", "Medium", "High"]).describe("Risk level assessment of the strategy"),
+      complexity: z.enum(["Beginner", "Intermediate", "Advanced"]).describe("Technical complexity level"),
+      pythonCode: z.string().describe("Complete Python code for the trading strategy"),
+      estimatedGas: z.number().describe("Estimated gas cost for deployment (realistic estimate)"),
+      keyFeatures: z.array(z.string()).describe("Key features and highlights of the strategy"),
+      recommendedCapital: z.number().describe("Recommended minimum capital in USD"),
+    }),
+  });
+
+  return strategyData;
+}
