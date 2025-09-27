@@ -1,0 +1,39 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-1ab8f1e3f3e7739d8ef839c27e86aded0ad99f6a",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/RatingSystem.sol": "project/contracts/RatingSystem.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/RatingSystem.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.0;\r\n\r\ncontract RatingSystem {\r\n    // Stores the total cumulative rating score for an item ID\r\n    mapping(uint256 => uint256) public totalScores;\r\n\r\n    // Stores the number of individual ratings submitted for an item ID\r\n    mapping(uint256 => uint256) public numRatings;\r\n\r\n    // Event to log successful rating submissions for off-chain monitoring\r\n    event RatingSubmitted(uint256 indexed itemId, uint8 rating, address rater);\r\n\r\n    /**\r\n     * @notice Allows a user to submit a rating for a specific item.\r\n     * @param _itemId The unique identifier of the item being rated.\r\n     * @param _rating The rating value (e.g., 1 to 5).\r\n     */\r\n    function submitRating(uint256 _itemId, uint8 _rating) public {\r\n        require(_rating >= 1 && _rating <= 5, \"Rating must be between 1 and 5\");\r\n        \r\n        totalScores[_itemId] += _rating;\r\n        numRatings[_itemId]++;\r\n\r\n        emit RatingSubmitted(_itemId, _rating, msg.sender);\r\n    }\r\n    \r\n    /**\r\n     * @notice Calculates the integer average rating for an item.\r\n     * @param _itemId The unique identifier of the item.\r\n     * @return The average rating (integer division).\r\n     */\r\n    function getAverageRating(uint256 _itemId) public view returns (uint256) {\r\n        if (numRatings[_itemId] == 0) {\r\n            return 0;\r\n        }\r\n        // Integer division is used here for simplicity.\r\n        return totalScores[_itemId] / numRatings[_itemId];\r\n    }\r\n}"
+      }
+    }
+  }
+}
