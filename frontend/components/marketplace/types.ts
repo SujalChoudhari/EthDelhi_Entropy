@@ -1,21 +1,27 @@
 import { LucideIcon } from 'lucide-react';
 
 export type Strategy = {
-  id: string;
-  agent_id: string; // backend id
-  creator: string;
-  title: string;
-  summary: string;
-  description: string;
-  happiness: number;
-  users: number;
-  profitUsers: number;
-  avgStopLoss: number;
-  avgGains: number;
-  successRate: number;
-  monthlyFee: number;
-  code?: string;
+  agent_id: string; // Primary identifier
+  code: string;
   agentverse_id?: string;
+  
+  // New strategy parameters (primary)
+  risk?: string;
+  assetClass?: string;
+  time?: string;
+  currentStateOfMarket?: string;
+  interest?: string;
+  perf?: number;
+  isNew?: boolean;
+  reputation?: number;
+  
+  // Old parameters (kept for compatibility)
+  name?: string;
+  creator?: string;
+  title?: string;
+  summary?: string;
+  description?: string;
+  type?: string;
 };
 
 export type DeploymentData = {

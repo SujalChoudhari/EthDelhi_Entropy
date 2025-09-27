@@ -1,7 +1,13 @@
 export const API_BASE = "http://localhost:8000/agents";
 
 export async function fetchStrategies(search?: string) {
-  const url = search ? `${API_BASE}/search?q=${encodeURIComponent(search)}` : API_BASE + "/";
+  const params = new URLSearchParams();
+  params.append('type', 'string'); // Only fetch strategy-type agents
+  if (search) {
+    params.append('search', search);
+  }
+  
+  const url = `${API_BASE}/?${params.toString()}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch strategies");
   const data = await res.json();

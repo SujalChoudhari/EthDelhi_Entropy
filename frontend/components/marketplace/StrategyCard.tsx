@@ -10,31 +10,49 @@ interface StrategyCardProps {
 
 const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onSelect }) => (
   <div
-    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
+    className="bg-card rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-border"
     onClick={() => onSelect(strategy)}
     data-agent-id={strategy.agent_id}
   >
     <div className="p-6">
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">{strategy.title}</h3>
-        <div className="flex items-center text-sm text-gray-500">
-          <Users className="h-4 w-4 mr-1" />
-          {strategy.users}
+        <div>
+          <h3 className="text-lg font-semibold text-card-foreground">{strategy.title || strategy.name || 'Untitled Strategy'}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`px-2 py-1 text-xs rounded-full ${strategy.isNew ? '' : ''}`}>
+              {strategy.isNew ? 'New' : 'Established'}
+            </span>
+            <span className="px-2 py-1 text-xs rounded-full bg-muted text-muted-foreground">
+              {strategy.risk || 'Moderate'}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center text-sm text-muted-foreground">
+          <TrendingUp className="h-4 w-4 mr-1" />
+          <span className="font-medium">{strategy.reputation?.toFixed(1) || '0.0'}</span>
         </div>
       </div>
       
-      <p className="text-sm text-gray-600 mb-2">by {strategy.creator}</p>
-      <p className="text-gray-700 mb-4 line-clamp-2">{strategy.summary}</p>
+      <p className="text-sm text-muted-foreground mb-2">by {strategy.creator || 'Unknown'}</p>
+      
+      {strategy.summary && (
+        <p className="text-card-foreground mb-4 line-clamp-2">{strategy.summary}</p>
+      )}
       
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <span className="text-2xl mr-2">😊</span>
-          <span className="text-sm font-medium text-gray-900">{strategy.happiness}</span>
-          <span className="text-xs text-gray-500 ml-1">reactions</span>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium">Asset:</span> {strategy.assetClass || 'Mixed'}
         </div>
-        <div className="flex items-center text-green-600">
+        <div className="flex items-center text-primary">
           <TrendingUp className="h-4 w-4 mr-1" />
-          <span className="text-sm font-medium">{strategy.avgGains}%</span>
+          <span className="text-sm font-medium">{strategy.perf?.toFixed(1) || '0.0'}%</span>
+        </div>
+      </div>
+      
+      <div className="mt-3 pt-3 border-t border-border">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Time: {strategy.time || 'Medium-term'}</span>
+          <span className="capitalize">{strategy.type || 'Strategy'}</span>
         </div>
       </div>
     </div>
