@@ -1,12 +1,15 @@
+// StrategyModal.tsx
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { Strategy, DeploymentData } from './types';
-import { Users, TrendingUp, DollarSign, Shield, Zap } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, Shield, Zap, Plug } from 'lucide-react'; 
 import StatCard from './StatCard';
 import { updateHappiness } from './api';
-import { useMetamask } from './useMetamask';
-import { useStrategyRatingsContract } from './useStrategyRatingsContract';
+// use the shared hooks from the frontend hooks folder
+import { useMetamask } from '@/hooks/useMetamask';
+import { useStrategyRatingsContract } from '@/hooks/useStrategyRatingsContract';
 
 interface StrategyModalProps {
   strategy: Strategy | null;
@@ -14,7 +17,13 @@ interface StrategyModalProps {
 }
 
 
-const CONTRACT_ADDRESS = "0x18f0d17cff482835e31b51191c2c260e0db33245"; // Hedera EVM address
+// ⚠️ UPDATE THIS LINE with your DEPLOYED ADDRESS:
+const CONTRACT_ADDRESS = "0xb565D50e7742039f3FD65229394d29fF28DBc5d7";
+
+const shortenAddress = (address: string | null) => {
+    if (!address) return 'Not Connected';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
 
 const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
   const [deploymentData, setDeploymentData] = useState<DeploymentData>({ budget: '', stopLoss: '' });
@@ -22,9 +31,12 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [onchainRating, setOnchainRating] = useState<{ average: number, count: number } | null>(null);
   const [onchainLoading, setOnchainLoading] = useState(false);
+  
   const { account, connect } = useMetamask();
+  // useStrategyRatingsContract now returns STABLE functions
   const { rate, getRating, loading: contractLoading } = useStrategyRatingsContract(CONTRACT_ADDRESS);
 
+  // 💡 FIX FOR LAG: useEffect now correctly depends on stable `getRating` function
   useEffect(() => {
     if (strategy) {
       setDeploymentData({ budget: '', stopLoss: '' });
@@ -32,12 +44,22 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
       setHasRated(false);
       setOnchainRating(null);
       setOnchainLoading(true);
-      getRating(strategy.agent_id)
-        .then(setOnchainRating)
-        .catch(() => setOnchainRating(null))
-        .finally(() => setOnchainLoading(false));
+
+      // Convert backend agent id (string) to number for on-chain calls
+      const itemId = Number(strategy.agent_id);
+      if (Number.isFinite(itemId)) {
+        // Fetch initial rating using the stable function
+        getRating(itemId)
+          .then(setOnchainRating)
+          .catch(() => setOnchainRating(null))
+          .finally(() => setOnchainLoading(false));
+      } else {
+        // If agent_id can't be converted, skip on-chain fetch
+        setOnchainRating(null);
+        setOnchainLoading(false);
+      }
     }
-  }, [strategy]);
+  }, [strategy, getRating]); // Safe dependency array
 
   if (!strategy) return null;
 
@@ -49,16 +71,35 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
   const handleHappinessRating = async (rating: number) => {
     setUserHappiness(rating);
     setHasRated(true);
+
     if (strategy && strategy.agent_id) {
+      // 1. Always update backend first (works without wallet)
       try {
-        await updateHappiness(strategy.agent_id, rating); // backend
-      } catch (e) {}
-      try {
-        await connect();
-        await rate(strategy.agent_id, rating); // on-chain
-        const updated = await getRating(strategy.agent_id);
-        setOnchainRating(updated);
-      } catch (e) {}
+        await updateHappiness(strategy.agent_id, rating);
+      } catch (e) {
+        console.error("Backend rating update failed:", e);
+        // Let user proceed even if backend fails
+      }
+
+      // 2. Try on-chain update only if wallet is available and agent_id is a number
+      const itemId = Number(strategy.agent_id);
+      if (account && Number.isFinite(itemId)) {
+        try {
+          await rate(itemId, rating); // Execute on-chain TX
+          // Re-fetch updated data after transaction is confirmed
+          const updated = await getRating(itemId);
+          setOnchainRating(updated);
+        } catch (e) {
+          console.error("On-chain rating transaction failed:", e);
+          alert("Transaction failed or was rejected by user. Check console for details.");
+          // Revert only the on-chain state; keep backend rating
+          setHasRated(false);
+          setUserHappiness(0);
+        }
+      } else {
+        // If no wallet or invalid id, record only backend rating and inform user via UI
+        // no-op for onchain state
+      }
     }
   };
 
@@ -157,6 +198,13 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
           {/* Happiness Rating (Backend + On-chain) */}
            <div className="p-4 border border-border rounded-lg bg-secondary/10">
              <h3 className="text-lg font-semibold mb-3 text-center">Rate Your Experience</h3>
+             
+             {!account && (
+                <div className="text-center text-sm text-red-500 mb-3">
+                    Please connect your wallet to submit an on-chain rating.
+                </div>
+             )}
+             
              <div className="flex justify-center items-center space-x-4 mb-2">
                {[1, 2, 3, 4, 5].map((rating) => (
                  <button
@@ -165,7 +213,8 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
                    className={`text-3xl transition-transform hover:scale-110 ${
                      userHappiness >= rating ? 'opacity-100' : 'opacity-40'
                    }`}
-                   disabled={contractLoading}
+                   // Disable buttons if loading OR already rated. Wallet not required for backend-only rating.
+                   disabled={contractLoading || hasRated} 
                  >
                    {rating === 1 ? '😢' : rating === 2 ? '😕' : rating === 3 ? '😐' : rating === 4 ? '😊' : '🤩'}
                  </button>
