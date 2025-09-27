@@ -32,12 +32,12 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 font-sans">
+    <div className="min-h-screen bg-background p-6 font-sans">
       <div className="max-w-7xl mx-auto">
         <Header />
         <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
         {loading ? (
-          <div className="text-center py-10">Loading strategies...</div>
+          <div className="text-center py-10 text-muted-foreground">Loading strategies...</div>
         ) : (
           <StrategyGrid strategies={strategies} onSelectStrategy={handleSelectStrategy} />
         )}

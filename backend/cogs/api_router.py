@@ -11,17 +11,22 @@ from typing import Optional
 class AgentCode(BaseModel):
     code: str
     agentverse_id: Optional[str] = None
+    # New strategy recommendation parameters (primary)
+    risk: Optional[str] = None
+    assetClass: Optional[str] = None
+    time: Optional[str] = None
+    currentStateOfMarket: Optional[str] = None
+    interest: Optional[str] = None
+    perf: Optional[float] = 0
+    isNew: Optional[bool] = False
+    reputation: Optional[float] = 0
+    # Old parameters (kept as requested)
+    name: Optional[str] = None
     creator: Optional[str] = None
     title: Optional[str] = None
     summary: Optional[str] = None
     description: Optional[str] = None
-    happiness: Optional[int] = 0
-    users: Optional[int] = 0
-    profitUsers: Optional[int] = 0
-    avgStopLoss: Optional[float] = 0
-    avgGains: Optional[float] = 0
-    successRate: Optional[float] = 0
-    monthlyFee: Optional[float] = 0
+    type: Optional[str] = None
 
 class HappinessUpdate(BaseModel):
     happiness: int
@@ -36,18 +41,23 @@ async def options_agents():
 async def create_agent(payload: AgentCode):
     agent_id = manager.create_agent(
         code=payload.code,
-        agentverse_id=payload.agentverse_id or 0,
+        agentverse_id=payload.agentverse_id,
+        # New strategy parameters
+        risk=payload.risk,
+        assetClass=payload.assetClass,
+        time=payload.time,
+        currentStateOfMarket=payload.currentStateOfMarket,
+        interest=payload.interest,
+        perf=payload.perf or 0,
+        isNew=payload.isNew or False,
+        reputation=payload.reputation or 0,
+        # Old parameters (kept as requested)
+        name=payload.name,
         creator=payload.creator,
         title=payload.title,
         summary=payload.summary,
         description=payload.description,
-        happiness= 0,
-        users=0,
-        profitUsers=0,
-        avgStopLoss=0,
-        avgGains=0,
-        successRate=0,
-        monthlyFee=payload.monthlyFee
+        type=payload.type,
     )
     return {"agent_id": agent_id, "message": "Agent created"}
 

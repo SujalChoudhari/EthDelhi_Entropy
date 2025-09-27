@@ -20,7 +20,6 @@ class AgentDatabase:
                     agent_id TEXT PRIMARY KEY,
                     code TEXT NOT NULL,
                     agentverse_id TEXT,
-                    name TEXT,
                     risk TEXT,
                     assetClass TEXT,
                     time TEXT,
@@ -28,21 +27,52 @@ class AgentDatabase:
                     interest TEXT,
                     perf REAL DEFAULT 0,
                     isNew BOOL DEFAULT 0,
-                    reputation REAL DEFAULT 0
+                    reputation REAL DEFAULT 0,
+                    name TEXT,
+                    creator TEXT,
+                    title TEXT,
+                    summary TEXT,
+                    description TEXT,
+                    type TEXT
                 )
                 """
             )
             conn.commit()
 
-    def add_agent(self, agent_id: str, code: str, agentverse_id: str = None, creator: str = None, title: str = None, summary: str = None, description: str = None, happiness: int = 0, users: int = 0, profitUsers: int = 0, avgStopLoss: float = 0, avgGains: float = 0, successRate: float = 0, monthlyFee: float = 0):
+    def add_agent(self, 
+                  agent_id: str, 
+                  code: str, 
+                  agentverse_id: str = None,
+                  # New strategy parameters (primary)
+                  risk: str = None,
+                  assetClass: str = None, 
+                  time: str = None,
+                  currentStateOfMarket: str = None,
+                  interest: str = None,
+                  perf: float = 0,
+                  isNew: bool = False,
+                  reputation: float = 0,
+                  # Old parameters (kept for compatibility - will become redundant)
+                  name: str = None,
+                  creator: str = None, 
+                  title: str = None, 
+                  summary: str = None, 
+                  description: str = None,
+                  type:str = None ):
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             c.execute(
                 """
-                INSERT INTO agents (agent_id, code, agentverse_id, creator, title, summary, description, happiness, users, profitUsers, avgStopLoss, avgGains, successRate, monthlyFee)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO agents (
+                    agent_id, code, agentverse_id, 
+                    risk, assetClass, time, currentStateOfMarket, interest, perf, isNew, reputation,
+                    name, creator, title, summary, description, type
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (agent_id, code, agentverse_id, creator, title, summary, description, happiness, users, profitUsers, avgStopLoss, avgGains, successRate, monthlyFee),
+                (agent_id, code, agentverse_id, 
+                 risk, assetClass, time, currentStateOfMarket, interest, perf, isNew, reputation,
+                 name, creator, title, summary, description, type),
             )
             conn.commit()
 
@@ -84,23 +114,36 @@ class AgentDatabase:
     def list_agents(self, search: str = None, type: str = None):
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
-            columns = [
-                "agent_id", "code", "agentverse_id", "creator", "title", "summary", "description",
-                "happiness", "users", "profitUsers", "avgStopLoss", "avgGains", "successRate", "monthlyFee", "type", ""
+            # Updated columns to focus on strategy recommendation parameters
+            searchable_columns = [
+                "agent_id", "code", "agentverse_id", "risk", "assetClass", "time", 
+                "currentStateOfMarket", "interest", "name", "creator", "title", "summary", "description"
             ]
 
+            where_conditions = []
+            params = []
+            
             if search:
                 like = f"%{search.lower()}%"
-                where_clause = " OR ".join([f"LOWER({col}) LIKE ?" for col in columns if col not in ["happiness", "users", "profitUsers", "avgStopLoss", "avgGains", "successRate", "monthlyFee"]])
-                params = [like] * where_clause.count("?")
-                c.execute(
-                    f"""
-                    SELECT * FROM agents
-                    WHERE {where_clause}
-                    ORDER BY avgGains DESC
-                    """,
-                    params
-                )
+                search_clause = " OR ".join([f"LOWER({col}) LIKE ?" for col in searchable_columns])
+                where_conditions.append(f"({search_clause})")
+                params.extend([like] * len(searchable_columns))
+            
+            if type:
+                where_conditions.append("type = ?")
+                params.append(type)
+            
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            
+            c.execute(
+                f"""
+                SELECT * FROM agents
+                WHERE {where_clause}
+                ORDER BY reputation DESC, perf DESC
+                """,
+                params
+            )
+            
             rows = c.fetchall()
             col_names = [desc[0] for desc in c.description]
             return [dict(zip(col_names, row)) for row in rows]

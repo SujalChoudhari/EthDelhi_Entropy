@@ -59,17 +59,22 @@ class StrategyManager:
                 "queue": None,
                 "status": "stopped",
                 "agentverse_id": row.get("agentverse_id"),
+                # New strategy parameters
+                "risk": row.get("risk"),
+                "assetClass": row.get("assetClass"),
+                "time": row.get("time"),
+                "currentStateOfMarket": row.get("currentStateOfMarket"),
+                "interest": row.get("interest"),
+                "perf": row.get("perf", 0),
+                "isNew": row.get("isNew", False),
+                "reputation": row.get("reputation", 0),
+                # Old parameters (kept as requested)
+                "name": row.get("name"),
                 "creator": row.get("creator"),
                 "title": row.get("title"),
                 "summary": row.get("summary"),
                 "description": row.get("description"),
-                "happiness": row.get("happiness", 0),
-                "users": row.get("users", 0),
-                "profitUsers": row.get("profitUsers", 0),
-                "avgStopLoss": row.get("avgStopLoss", 0),
-                "avgGains": row.get("avgGains", 0),
-                "successRate": row.get("successRate", 0),
-                "monthlyFee": row.get("monthlyFee", 0)
+                "type": row.get("type"),
             }
         
         self.running_agents = {}
@@ -78,17 +83,22 @@ class StrategyManager:
         self,
         code: str,
         agentverse_id: str = None,
+        # New strategy recommendation parameters (primary)
+        risk: str = None,
+        assetClass: str = None,
+        time: str = None,
+        currentStateOfMarket: str = None,
+        interest: str = None,
+        perf: float = 0,
+        isNew: bool = False,
+        reputation: float = 0,
+        # Old parameters (kept for compatibility - will become redundant)
+        name: str = None,
         creator: str = None,
         title: str = None,
         summary: str = None,
         description: str = None,
-        happiness: int = 0,
-        users: int = 0,
-        profitUsers: int = 0,
-        avgStopLoss: float = 0,
-        avgGains: float = 0,
-        successRate: float = 0,
-        monthlyFee: float = 0
+        type: str = None,
     ) -> str:
         agent_id = str(uuid.uuid4())
         self.agents[agent_id] = {
@@ -97,20 +107,26 @@ class StrategyManager:
             "queue": None,
             "status": "stopped",
             "agentverse_id": agentverse_id,
+            # New strategy parameters
+            "risk": risk,
+            "assetClass": assetClass,
+            "time": time,
+            "currentStateOfMarket": currentStateOfMarket,
+            "interest": interest,
+            "perf": perf,
+            "isNew": isNew,
+            "reputation": reputation,
+            # Old parameters (kept as requested)
+            "name": name,
             "creator": creator,
             "title": title,
             "summary": summary,
             "description": description,
-            "happiness": happiness,
-            "users": users,
-            "profitUsers": profitUsers,
-            "avgStopLoss": avgStopLoss,
-            "avgGains": avgGains,
-            "successRate": successRate,
-            "monthlyFee": monthlyFee
+            "type": type,
         }
         self.db.add_agent(
-            agent_id, code, agentverse_id, creator, title, summary, description, happiness, users, profitUsers, avgStopLoss, avgGains, successRate, monthlyFee
+            agent_id, code, agentverse_id, risk, assetClass, time, currentStateOfMarket, interest, perf, isNew, reputation,
+            name, creator, title, summary, description, type
         )
         return agent_id
 
@@ -179,8 +195,8 @@ class StrategyManager:
         }
 
     def list_agents(self, search: str = None, type: str = None) -> list:
-        # Use DB for search and listing
-        agents = self.db.list_agents(search=search)
+        # Use DB for search and listing with type filter
+        agents = self.db.list_agents(search=search, type=type)
         return agents
     def update_happiness(self, agent_id: str, happiness: int) -> bool:
         agent = self.agents.get(agent_id)
