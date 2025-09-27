@@ -17,7 +17,7 @@ export default function StrategyRecommenderPage() {
     // This will be integrated with your payment/investment system later
   };
 
-  // Sample AI-generated data for testing
+  // Sample AI-generated data for testing behavioral analysis
   const sampleAIData = {
     userProfile: {
       user_id: "user_123",
@@ -29,8 +29,10 @@ export default function StrategyRecommenderPage() {
       interest: "RSI",
       excludes: []
     },
-    explanation: "Based on your moderate risk tolerance and interest in large-cap cryptocurrencies, I've generated a profile that matches intermediate-level traders seeking medium-term opportunities.",
-    title: "AI-Generated Strategy Recommendations"
+    explanation: "I've analyzed your conversation patterns and identified strategies that match your comfort level with established cryptocurrencies and steady growth approach.",
+    title: "Smart Recommendations Based on Your Profile",
+    confidenceLevel: "High",
+    inferredTraits: ["Safety-focused", "Growth-oriented", "Prefers established assets"]
   };
 
   if (!testMode) {
@@ -111,12 +113,34 @@ export default function StrategyRecommenderPage() {
                 </ul>
               </div>
               <div>
-                <p className="font-medium mb-2">Expected Parameters:</p>
+                <p className="font-medium mb-2">Behavioral Analysis Test Phrases:</p>
                 <ul className="space-y-1">
-                  <li>• profile, asset_class, time_horizon</li>
-                  <li>• liquidity, experience, interest</li>
-                  <li>• user_id, excludes (optional)</li>
+                  <li>• "Show me safe strategies" → Conservative</li>
+                  <li>• "I want to make good profits" → Moderate</li>
+                  <li>• "Looking for moon opportunities" → Aggressive</li>
+                  <li>• "What's Bitcoin trading like?" → Beginner</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center space-x-2 mb-2">
+              <Bot className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <h4 className="font-medium text-blue-800 dark:text-blue-200">Chat Examples for Behavioral Analysis:</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-blue-700 dark:text-blue-300">
+              <div>
+                <p className="font-medium">Conservative Detection:</p>
+                <p>"I'm looking for stable returns"</p>
+                <p>"What are some safe crypto investments?"</p>
+                <p>"I want to build wealth slowly"</p>
+              </div>
+              <div>
+                <p className="font-medium">Aggressive Detection:</p>
+                <p>"Show me high-yield DeFi strategies"</p>
+                <p>"I want quick gains"</p>
+                <p>"What's the hottest trading opportunity?"</p>
               </div>
             </div>
           </div>

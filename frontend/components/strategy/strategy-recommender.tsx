@@ -54,6 +54,8 @@ interface StrategyRecommenderProps {
     userProfile: UserProfile;
     explanation: string;
     title: string;
+    confidenceLevel?: string;
+    inferredTraits?: string[];
   };
 }
 
@@ -443,6 +445,24 @@ export function StrategyRecommender({ onInvest, recommendationData }: StrategyRe
                     <p className="text-sm text-muted-foreground">
                       Found {recommendations.length} strategies matching your profile
                     </p>
+                    {/* Show AI confidence and traits for debugging */}
+                    {recommendationData?.confidenceLevel && (
+                      <div className="flex items-center space-x-4 mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          AI Confidence: {recommendationData.confidenceLevel}
+                        </Badge>
+                        {recommendationData.inferredTraits && recommendationData.inferredTraits.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-muted-foreground">Detected:</span>
+                            {recommendationData.inferredTraits.slice(0, 2).map((trait, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {trait}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <Button
                     variant="outline"
