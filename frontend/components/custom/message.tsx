@@ -61,7 +61,7 @@ export const Message = ({
         )}
 
         {toolInvocations && (
-          <div className={`flex flex-col gap-4 max-w-[90%] ${!isAssistant && "items-end"}`}>
+          <div className={`flex flex-col gap-4 w-[90%] ${!isAssistant && "items-end"}`}>
             {toolInvocations.map((toolInvocation, index) => {
               const { toolName, toolCallId, state } = toolInvocation;
 
