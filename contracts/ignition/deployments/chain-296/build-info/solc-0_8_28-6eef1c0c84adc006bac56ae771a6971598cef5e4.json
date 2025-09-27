@@ -1,0 +1,39 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-6eef1c0c84adc006bac56ae771a6971598cef5e4",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/ContentStore.sol": "project/contracts/ContentStore.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/ContentStore.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract ContentStore {\n    mapping(uint256 => string) public cidOf;\n\n    event CIDStored(uint256 indexed id, string cid);\n\n    function storeCID(uint256 id, string calldata cid) external {\n        cidOf[id] = cid;\n        emit CIDStored(id, cid);\n    }\n\n    function getCID(uint256 id) external view returns (string memory) {\n        return cidOf[id];\n    }\n}\n"
+      }
+    }
+  }
+}
