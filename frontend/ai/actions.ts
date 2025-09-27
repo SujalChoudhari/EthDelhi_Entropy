@@ -45,6 +45,42 @@ export async function generateAccountOptions() {
   ];
 }
 
+export async function generateStrategyRecommendations(userQuery: string) {
+  const { object: recommendationData } = await generateObject({
+    model: geminiFlashModel,
+    prompt: `
+      Based on the user query: "${userQuery}"
+      
+      Generate a user profile and explanation for trading strategy recommendations.
+      The user is asking for strategy recommendations, so create a realistic profile 
+      that matches their request. Consider their risk tolerance, experience level,
+      and preferences mentioned in the query.
+    `,
+    schema: z.object({
+      userProfile: z.object({
+        profile: z.enum(["Conservative", "Moderate", "Aggressive", "High-Degenerate"])
+          .describe("Risk profile based on user query"),
+        asset_class: z.enum(["LargeCapCrypto", "MidCapCrypto", "Stablecoins", "DeFi", "NFTs"])
+          .describe("Preferred asset class"),
+        time_horizon: z.enum(["Short-term", "Medium-term", "Long-term"])
+          .describe("Investment time horizon"),
+        liquidity: z.enum(["High", "Medium", "Low"])
+          .describe("Liquidity preference"),
+        experience: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"])
+          .describe("Trading experience level"),
+        interest: z.enum(["RSI", "MACD", "VWAP", "Stochastic"])
+          .describe("Technical indicator preference"),
+      }),
+      explanation: z.string()
+        .describe("Brief explanation of why this profile was selected based on the user's query"),
+      title: z.string()
+        .describe("A catchy title for the recommendation request"),
+    }),
+  });
+
+  return recommendationData;
+}
+
 
 
 export async function generateAppointmentDetails(subject: string, context?: string) {
@@ -64,4 +100,33 @@ export async function generateAppointmentDetails(subject: string, context?: stri
   });
 
   return appointmentDetails;
+}
+
+export async function generateTradingStrategy(description: string) {
+  const { object: strategyData } = await generateObject({
+    model: geminiFlashModel,
+    prompt: `Based on this trading strategy description: "${description}"
+    
+    Generate a complete Python trading strategy using the ASI uAgent framework. The strategy should:
+    1. It should be without comments and clean.
+    2. Include proper error handling and risk management
+    3. Use realistic trading logic based on the description
+    4. Follow Python best practices
+    5. Include imports for common trading libraries (pandas, numpy, etc.)
+    6. Have clear entry and exit signals
+    
+    Make the code professional and deployable on a decentralized trading platform.`,
+    schema: z.object({
+      title: z.string().describe("A clear, concise title for the strategy"),
+      description: z.string().describe("A refined description of what the strategy does"),
+      riskLevel: z.enum(["Low", "Medium", "High"]).describe("Risk level assessment of the strategy"),
+      complexity: z.enum(["Beginner", "Intermediate", "Advanced"]).describe("Technical complexity level"),
+      pythonCode: z.string().describe("Complete Python code for the trading strategy"),
+      estimatedGas: z.number().describe("Estimated gas cost for deployment (realistic estimate)"),
+      keyFeatures: z.array(z.string()).describe("Key features and highlights of the strategy"),
+      recommendedCapital: z.number().describe("Recommended minimum capital in USD"),
+    }),
+  });
+
+  return strategyData;
 }

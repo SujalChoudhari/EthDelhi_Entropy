@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from cogs.strategy_manager import StrategyManager
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 manager = StrategyManager()
-
-
 
 # Model for agent creation (all fields)
 from typing import Optional
@@ -27,6 +26,11 @@ class AgentCode(BaseModel):
 class HappinessUpdate(BaseModel):
     happiness: int
 
+
+# Handle preflight OPTIONS request
+@router.options("/")
+async def options_agents():
+    return {"message": "OK"}
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_agent(payload: AgentCode):
@@ -113,3 +117,13 @@ async def get_agent_address(agent_id: str):
     if not address:
         raise HTTPException(status_code=404, detail="Agent address not found in logs")
     return {"agent_id": agent_id, "address": address}
+
+@router.post("/deploy")
+async def deploy_agent(agent_id: str):
+    if not manager.deploy_agent(agent_id):
+        raise HTTPException(status_code=404, detail="Agent Not Found")
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"agent_id": agent_id, "status": "deployed"}
+    )
