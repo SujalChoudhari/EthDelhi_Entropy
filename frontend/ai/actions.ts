@@ -45,36 +45,75 @@ export async function generateAccountOptions() {
   ];
 }
 
-export async function generateStrategyRecommendations(userQuery: string) {
+export async function generateStrategyRecommendations(userQuery: string, chatHistory?: any[]) {
   const { object: recommendationData } = await generateObject({
     model: geminiFlashModel,
     prompt: `
-      Based on the user query: "${userQuery}"
+      You are analyzing a user's request for trading strategy recommendations. The user is a LAYMAN who won't explicitly state their risk tolerance or experience level.
+
+      User Query: "${userQuery}"
+      ${chatHistory && chatHistory.length > 0 ? `
+      Previous Chat Context: ${JSON.stringify(chatHistory.slice(-10))} // Last 10 messages for behavioral analysis
+      ` : 'Chat History: This appears to be a new user or first interaction'}
+
+      BEHAVIORAL ANALYSIS INSTRUCTIONS:
       
-      Generate a user profile and explanation for trading strategy recommendations.
-      The user is asking for strategy recommendations, so create a realistic profile 
-      that matches their request. Consider their risk tolerance, experience level,
-      and preferences mentioned in the query.
+      🧠 UNCONSCIOUS PROFILING - Infer user characteristics from:
+      - Language used (casual = beginner, technical = advanced)
+      - Questions asked (basic concepts = conservative, complex strategies = aggressive)
+      - Previous strategy interests mentioned
+      - Risk words used ("safe", "stable" = conservative | "moon", "gains", "fast" = aggressive)
+      - Time mentions ("long term", "retirement" = conservative | "quick", "day trading" = aggressive)
+      
+      📊 DEFAULT RECOMMENDATIONS (for new/unclear users):
+      - Start with "Moderate" risk profile for safety
+      - Prefer "LargeCapCrypto" as it's most familiar to laymen  
+      - Default to "Medium-term" horizon (weeks to months)
+      - Assume "Beginner" experience unless proven otherwise
+      - Use "High" liquidity preference for safety
+      - Start with "RSI" indicator as it's simple to understand
+
+      🎯 BEHAVIORAL CUES TO WATCH FOR:
+      - Mentions of "Bitcoin", "Ethereum" = LargeCapCrypto preference
+      - Words like "safe", "stable", "secure" = Conservative profile
+      - Words like "profit", "gains", "opportunity" = Moderate profile  
+      - Words like "moon", "degen", "yolo", "risky" = Aggressive profile
+      - Mentions of "DeFi", "yield farming", "protocols" = DeFi preference
+      - Questions about basics = Beginner experience
+      - Technical analysis mentions = Intermediate+ experience
+      
+      🔍 INFERENCE RULES:
+      1. If user is new/unclear -> Use moderate defaults with conservative bias
+      2. If user shows risk appetite -> Gradually increase risk profile
+      3. If user mentions specific coins -> Match asset class accordingly
+      4. If user asks about "quick profits" -> Short-term horizon
+      5. If user asks about "building wealth" -> Long-term horizon
+      
+      Generate a profile that feels natural and doesn't expose our analysis process.
     `,
     schema: z.object({
       userProfile: z.object({
         profile: z.enum(["Conservative", "Moderate", "Aggressive", "High-Degenerate"])
-          .describe("Risk profile based on user query"),
+          .describe("Risk profile inferred from behavioral analysis"),
         asset_class: z.enum(["LargeCapCrypto", "MidCapCrypto", "Stablecoins", "DeFi", "NFTs"])
-          .describe("Preferred asset class"),
+          .describe("Asset preference based on user's language and context"),
         time_horizon: z.enum(["Short-term", "Medium-term", "Long-term"])
-          .describe("Investment time horizon"),
+          .describe("Investment horizon inferred from user's goals and language"),
         liquidity: z.enum(["High", "Medium", "Low"])
-          .describe("Liquidity preference"),
+          .describe("Liquidity need based on user's risk profile and experience"),
         experience: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"])
-          .describe("Trading experience level"),
+          .describe("Experience level inferred from technical language and questions"),
         interest: z.enum(["RSI", "MACD", "VWAP", "Stochastic"])
-          .describe("Technical indicator preference"),
+          .describe("Technical indicator suited to their inferred experience level"),
       }),
       explanation: z.string()
-        .describe("Brief explanation of why this profile was selected based on the user's query"),
+        .describe("Natural explanation without revealing the profiling process - focus on strategy benefits"),
       title: z.string()
-        .describe("A catchy title for the recommendation request"),
+        .describe("Engaging title that matches their request style"),
+      confidenceLevel: z.enum(["Low", "Medium", "High"])
+        .describe("How confident we are in our behavioral analysis"),
+      inferredTraits: z.array(z.string())
+        .describe("Key behavioral traits detected (for internal tracking)"),
     }),
   });
 

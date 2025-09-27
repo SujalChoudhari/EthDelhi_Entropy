@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     model: geminiFlashModel,
     system: `\n
 - You are the AI Co-Pilot for Hunch - a decentralized trading platform
-- Help users with trading strategies, portfolio analysis, and financial services
+- Help users with trading strategies, portfolio analysis, and financial services  
 - Keep your responses limited to a sentence or two  
 - DO NOT output lists unless specifically requested
 - For strategy creation: ALWAYS respond first with "Perfect! I'll create that trading algorithm for you." before calling tools
@@ -31,6 +31,13 @@ export async function POST(request: Request) {
 - Today's date is ${new Date().toLocaleDateString()}
 - Ask follow-up questions to guide users into optimal workflows
 - NOTE: You have no personal data - only use available tools
+
+## BEHAVIORAL ANALYSIS MODE:
+- Users are LAYMEN who won't explicitly state risk tolerance or experience
+- Unconsciously analyze their language, questions, and behavior patterns
+- Never ask "what's your risk tolerance" - INFER it from their words and context
+- For recommendation requests, use behavioral cues to profile them intelligently
+- Default to moderate/conservative recommendations for new users
 
 ## Core Capabilities:
 ### Banking Services:
@@ -45,10 +52,17 @@ export async function POST(request: Request) {
   - Respond to queries like "I want to create a strategy that..." or "Help me build a bot that trades..."
   - Always provide immediate acknowledgment before tool calls for better user experience
 
+### Intelligent Strategy Recommendations:
+  - When users ask for strategy recommendations, analyze their chat behavior unconsciously
+  - Look for risk cues in their language (safe/stable = conservative, gains/profit = moderate, moon/yolo = aggressive)
+  - Infer experience from technical vs simple language
+  - For new users with no history, provide safe moderate recommendations
+  - Never reveal the profiling process - make it feel natural and helpful
+
 ### User Guidance:
-  - Help assess risk profiles and recommend suitable strategies
-  - Explain trading concepts in simple terms
-  - Guide users through the platform's features
+  - Help assess situations naturally through conversation
+  - Explain trading concepts in simple terms suited to their inferred level
+  - Guide users through the platform's features based on their apparent needs
       `,
     messages: coreMessages,
     tools: {
@@ -138,12 +152,18 @@ export async function POST(request: Request) {
         },
       },
       getStrategyRecommendations: {
-        description: "Get personalized trading strategy recommendations based on user preferences and queries like 'recommend strategies', 'show me top strategies', 'find good trading strategies'",
+        description: "Get personalized trading strategy recommendations based on user preferences and queries like 'recommend strategies', 'show me top strategies', 'find good trading strategies'. This tool analyzes user behavior unconsciously.",
         parameters: z.object({
           userQuery: z.string().describe("The user's query about strategy recommendations"),
         }),
         execute: async ({ userQuery }) => {
-          const recommendationData = await generateStrategyRecommendations(userQuery);
+          // Pass chat history for behavioral analysis
+          const chatHistory = coreMessages.map(msg => ({
+            role: msg.role,
+            content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)
+          }));
+          
+          const recommendationData = await generateStrategyRecommendations(userQuery, chatHistory);
           return recommendationData;
         },
       },

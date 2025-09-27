@@ -1,11 +1,13 @@
-# # cogs/recommendation_router.py
-# from fastapi import APIRouter
-# from pydantic import BaseModel
-# from typing import List, Dict
-# from hyperon import *
+# cogs/recommendation_router.py
+from fastapi import APIRouter
+from pydantic import BaseModel
+from typing import List, Dict
+from hyperon import *
 
-# router = APIRouter()
+from cogs.database import AgentDatabase
 
+router = APIRouter()
+agent_db = AgentDatabase()
 
 # class UserProfile(BaseModel):
 #     user_id: str
@@ -46,64 +48,80 @@
 #     for ex in user.excludes:
 #         metta.space().add_atom(E(S("EXCLUDES_STRATEGY"), S(user.user_id), S(ex)))
 
-#     strategies_data = [
-#         (
-#             "s1",
-#             "Moderate",
-#             "LargeCapCrypto",
-#             "Medium-term",
-#             "Bullish",
-#             "RSI",
-#             1.5,
-#             True,
-#             0.9,
-#         ),
-#         (
-#             "s2",
-#             "Aggressive",
-#             "MidCapCrypto",
-#             "Short-term",
-#             "Volatile",
-#             "MACD",
-#             2.0,
-#             False,
-#             0.8,
-#         ),
-#         (
-#             "s3",
-#             "Conservative",
-#             "Stablecoins",
-#             "Long-term",
-#             "Sideways",
-#             "VWAP",
-#             1.0,
-#             True,
-#             0.95,
-#         ),
-#         (
-#             "s4",
-#             "High-Degenerate",
-#             "DeFi",
-#             "Short-term",
-#             "Volatile",
-#             "Stochastic",
-#             3.0,
-#             True,
-#             0.7,
-#         ),
-#         ("s5", "Moderate", "NFTs", "Medium-term", "Bullish", "MACD", 1.2, False, 0.85),
-#         (
-#             "s6",
-#             "Aggressive",
-#             "LargeCapCrypto",
-#             "Medium-term",
-#             "Bearish",
-#             "RSI",
-#             2.5,
-#             True,
-#             0.95,
-#         ),
-#     ]
+    all_strategies = agent_db.list_agents(type = "strategy")
+
+    strategies_data = []
+    for strategy in all_strategies:
+        strategies_data.append((
+            strategy["name"],
+            strategy["risk"],
+            strategy["assetClass"],
+            strategy["time"],
+            strategy["currentStateOfMarket"],
+            strategy["interest"],
+            strategy["perf"],
+            strategy["isNew"],
+            strategy["reputation"]
+        ))
+
+    # strategies_data = [
+    #     (
+    #         "s1",
+    #         "Moderate",
+    #         "LargeCapCrypto",
+    #         "Medium-term",
+    #         "Bullish",
+    #         "RSI",
+    #         1.5,
+    #         True,
+    #         0.9,
+    #     ),
+    #     (
+    #         "s2",
+    #         "Aggressive",
+    #         "MidCapCrypto",
+    #         "Short-term",
+    #         "Volatile",
+    #         "MACD",
+    #         2.0,
+    #         False,
+    #         0.8,
+    #     ),
+    #     (
+    #         "s3",
+    #         "Conservative",
+    #         "Stablecoins",
+    #         "Long-term",
+    #         "Sideways",
+    #         "VWAP",
+    #         1.0,
+    #         True,
+    #         0.95,
+    #     ),
+    #     (
+    #         "s4",
+    #         "High-Degenerate",
+    #         "DeFi",
+    #         "Short-term",
+    #         "Volatile",
+    #         "Stochastic",
+    #         3.0,
+    #         True,
+    #         0.7,
+    #     ),
+    #     ("s5", "Moderate", "NFTs", "Medium-term", "Bullish", "MACD", 1.2, False, 0.85),
+    #     (
+    #         "s6",
+    #         "Aggressive",
+    #         "LargeCapCrypto",
+    #         "Medium-term",
+    #         "Bearish",
+    #         "RSI",
+    #         2.5,
+    #         True,
+    #         0.95,
+    #     ),
+    # ]
 
 #     for (
 #         s_id,

@@ -20,17 +20,15 @@ class AgentDatabase:
                     agent_id TEXT PRIMARY KEY,
                     code TEXT NOT NULL,
                     agentverse_id TEXT,
-                    creator TEXT,
-                    title TEXT,
-                    summary TEXT,
-                    description TEXT,
-                    happiness INTEGER DEFAULT 0,
-                    users INTEGER DEFAULT 0,
-                    profitUsers INTEGER DEFAULT 0,
-                    avgStopLoss REAL DEFAULT 0,
-                    avgGains REAL DEFAULT 0,
-                    successRate REAL DEFAULT 0,
-                    monthlyFee REAL DEFAULT 0
+                    name TEXT,
+                    risk TEXT,
+                    assetClass TEXT,
+                    time TEXT,
+                    currentStateOfMarket TEXT,
+                    interest TEXT,
+                    perf REAL DEFAULT 0,
+                    isNew BOOL DEFAULT 0,
+                    reputation REAL DEFAULT 0
                 )
                 """
             )
@@ -83,13 +81,14 @@ class AgentDatabase:
                 return dict(zip(columns, row))
             return None
 
-    def list_agents(self, search: str = None):
+    def list_agents(self, search: str = None, type: str = None):
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             columns = [
                 "agent_id", "code", "agentverse_id", "creator", "title", "summary", "description",
-                "happiness", "users", "profitUsers", "avgStopLoss", "avgGains", "successRate", "monthlyFee"
+                "happiness", "users", "profitUsers", "avgStopLoss", "avgGains", "successRate", "monthlyFee", "type", ""
             ]
+
             if search:
                 like = f"%{search.lower()}%"
                 where_clause = " OR ".join([f"LOWER({col}) LIKE ?" for col in columns if col not in ["happiness", "users", "profitUsers", "avgStopLoss", "avgGains", "successRate", "monthlyFee"]])
@@ -102,8 +101,6 @@ class AgentDatabase:
                     """,
                     params
                 )
-            else:
-                c.execute("SELECT * FROM agents ORDER BY avgGains DESC")
             rows = c.fetchall()
             col_names = [desc[0] for desc in c.description]
             return [dict(zip(col_names, row)) for row in rows]
