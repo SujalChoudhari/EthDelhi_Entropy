@@ -53,8 +53,8 @@ async def create_agent(payload: AgentCode):
 
 
 @router.get("/")
-async def list_agents(search: str = None):
-    agents = manager.list_agents(search=search)
+async def list_agents(search: str = None, type: str = None):
+    agents = manager.list_agents(search=search, type = type)
     return {"agents": agents}
 # Add search endpoint (alias for list with search param)
 @router.get("/search")

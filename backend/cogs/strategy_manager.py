@@ -178,7 +178,7 @@ class StrategyManager:
             "agentverse_id": agent.get("agentverse_id"),
         }
 
-    def list_agents(self, search: str = None) -> list:
+    def list_agents(self, search: str = None, type: str = None) -> list:
         # Use DB for search and listing
         agents = self.db.list_agents(search=search)
         return agents
