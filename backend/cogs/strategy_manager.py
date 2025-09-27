@@ -5,6 +5,8 @@ import time
 from multiprocessing import Process, Queue
 from multiprocessing.queues import Queue as QueueType
 import logging
+import subprocess
+import os
 
 from .database import AgentDatabase  # <-- Add this import
 
@@ -69,6 +71,8 @@ class StrategyManager:
                 "successRate": row.get("successRate", 0),
                 "monthlyFee": row.get("monthlyFee", 0)
             }
+        
+        self.running_agents = {}
 
     def create_agent(
         self,
@@ -242,3 +246,35 @@ class StrategyManager:
             return address
         else:
             return logs  # Return logs if no address found
+
+    
+    def deploy_agent(self, agent_id: str):
+        agent = self.get_agent(agent_id)
+        python_code = agent['code']
+
+        script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts", "run_python.sh")
+
+        subprocess.run([script_path, f"{agent_id}.py", python_code], cwd=os.path.dirname(os.path.dirname(__file__)))
+
+        process = subprocess.Popen(
+            [sys.executable, f"{agent_id}.py"],
+            cwd=os.path.dirname(os.path.dirname(__file__)),
+            start_new_session=True       
+        )
+
+        self.running_agents[agent_id] = process
+
+        return True
+
+    def stop_agent(self, agent_id: str):
+        process = self.running_agents.get(agent_id)
+        if process:
+            process.terminate()  
+            process.wait()      
+            del self.running_agents[agent_id]
+            return True
+        return False
+
+    def is_running(self, agent_id: str):
+        process = self.running_agents.get(agent_id)
+        return process and process.poll() is None
