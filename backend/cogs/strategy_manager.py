@@ -4,6 +4,7 @@ from multiprocessing import Process, Queue
 from multiprocessing.queues import Queue as QueueType
 import logging
 
+from .database import AgentDatabase  # <-- Add this import
 
 def agent_runner(code: str, queue: QueueType):
     """Runs agent code and redirects stdout/stderr + logging output into a queue."""
@@ -44,15 +45,29 @@ class StrategyManager:
 
     def __init__(self):
         self.agents = {}
+        self.db = AgentDatabase()  # <-- Add database instance
 
-    def create_agent(self, code: str) -> str:
+        # Load agents from DB at startup
+        for row in self.db.list_agents():
+            agent_id = row["agent_id"]
+            self.agents[agent_id] = {
+                "code": row["code"],
+                "process": None,
+                "queue": None,
+                "status": "stopped",
+                "agentverse_id": row.get("agentverse_id"),
+            }
+
+    def create_agent(self, code: str, agentverse_id: str = None) -> str:
         agent_id = str(uuid.uuid4())
         self.agents[agent_id] = {
             "code": code,
             "process": None,
             "queue": None,
             "status": "stopped",
+            "agentverse_id": agentverse_id,
         }
+        self.db.add_agent(agent_id, code, agentverse_id)  # <-- Persist to DB
         return agent_id
 
     def start_agent(self, agent_id: str) -> bool:
@@ -91,6 +106,7 @@ class StrategyManager:
         if self.agents[agent_id]["status"] == "running":
             self.stop_agent(agent_id)
         del self.agents[agent_id]
+        self.db.delete_agent(agent_id)  # <-- Remove from DB
         return True
 
     def update_agent_code(self, agent_id: str, code: str) -> bool:
@@ -100,6 +116,7 @@ class StrategyManager:
         if agent["status"] == "running":
             self.stop_agent(agent_id)
         agent["code"] = code
+        self.db.update_agent(agent_id, code=code)  # <-- Update in DB
         return True
 
     def get_agent(self, agent_id: str) -> dict | None:
@@ -114,6 +131,7 @@ class StrategyManager:
             "agent_id": agent_id,
             "status": agent["status"],
             "code": agent["code"],
+            "agentverse_id": agent.get("agentverse_id"),
         }
 
     def list_agents(self) -> list:
