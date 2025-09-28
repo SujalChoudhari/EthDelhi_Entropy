@@ -1,10 +1,12 @@
 import sqlite3
 import os
+import time
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../_data"))
 os.makedirs(DATA_DIR, exist_ok=True)
 DB_PATH = os.path.join(DATA_DIR, "agents.db")
 
+PUB_SUB_DB_PATH = os.path.join(DATA_DIR, "pubsub.db")
 
 class AgentDatabase:
     def __init__(self, db_path=DB_PATH):
@@ -139,7 +141,7 @@ class AgentDatabase:
                 f"""
                 SELECT * FROM agents
                 WHERE {where_clause}
-                ORDER BY reputation DESC, perf DESC
+                ORDER BY agent_id
                 """,
                 params
             )
@@ -152,4 +154,144 @@ class AgentDatabase:
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             c.execute("UPDATE agents SET happiness = ? WHERE agent_id = ?", (happiness, agent_id))
+            conn.commit()
+
+class PubSubDatabase:
+    def __init__(self, db_path=PUB_SUB_DB_PATH):
+        self.db_path = db_path
+        self._init_db()
+
+    def _init_db(self):
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS ohlcv_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    agent_id TEXT NOT NULL,
+                    open_price REAL NOT NULL,
+                    high_price REAL NOT NULL,
+                    low_price REAL NOT NULL,
+                    close_price REAL NOT NULL,
+                    volume REAL NOT NULL,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    arguments TEXT NOT NULL
+                )
+                """
+            )
+            conn.commit()
+
+    def insert_row(self, 
+                   agent_id: str,
+                   open_price: float,
+                   high_price: float,
+                   low_price: float,
+                   close_price: float,
+                   volume: float,
+                   arguments: str,
+                   timestamp: str = None):
+        """
+        Insert a new OHLCV data row for a specific agent.
+        
+        Args:
+            agent_id: The agent identifier
+            open_price: Opening price
+            high_price: Highest price
+            low_price: Lowest price
+            close_price: Closing price
+            volume: Trading volume
+            timestamp: Optional timestamp (defaults to current time)
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            if timestamp is None:
+                timestamp = time.time()
+
+            c.execute(
+                """
+                INSERT INTO ohlcv_data (
+                    agent_id, open_price, high_price, low_price, close_price, volume, timestamp, arguments
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (agent_id, open_price, high_price, low_price, close_price, volume, timestamp, arguments)
+            )
+            conn.commit()
+
+    def get_latest_row(self, agent_id: str, arguments = None):
+        """
+        Get the latest OHLCV data row for a specific agent.
+        
+        Args:
+            agent_id: The agent identifier
+            
+        Returns:
+            Dictionary containing the latest OHLCV data or None if no data exists
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            where_clause = "WHERE agent_id = ? "
+            if arguments is not None:
+                where_clause += "AND arguments = ?"
+            c.execute(
+                f"""
+                SELECT * FROM ohlcv_data 
+                {where_clause}
+                ORDER BY timestamp DESC 
+                LIMIT 1
+                """,
+                (agent_id, arguments)
+            )
+            row = c.fetchone()
+            if row:
+                columns = [desc[0] for desc in c.description]
+                return dict(zip(columns, row))
+            return None
+
+    def get_all_rows(self, agent_id: str, limit: int = None):
+        """
+        Get all OHLCV data rows for a specific agent.
+        
+        Args:
+            agent_id: The agent identifier
+            limit: Optional limit on number of rows to return
+            
+        Returns:
+            List of dictionaries containing OHLCV data
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            if limit:
+                c.execute(
+                    """
+                    SELECT * FROM ohlcv_data 
+                    WHERE agent_id = ? 
+                    ORDER BY timestamp DESC 
+                    LIMIT ?
+                    """,
+                    (agent_id, limit)
+                )
+            else:
+                c.execute(
+                    """
+                    SELECT * FROM ohlcv_data 
+                    WHERE agent_id = ? 
+                    ORDER BY timestamp DESC
+                    """,
+                    (agent_id,)
+                )
+            rows = c.fetchall()
+            col_names = [desc[0] for desc in c.description]
+            return [dict(zip(col_names, row)) for row in rows]
+
+    def delete_agent_data(self, agent_id: str):
+        """
+        Delete all OHLCV data for a specific agent.
+        
+        Args:
+            agent_id: The agent identifier
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            c.execute("DELETE FROM ohlcv_data WHERE agent_id = ?", (agent_id,))
             conn.commit()
