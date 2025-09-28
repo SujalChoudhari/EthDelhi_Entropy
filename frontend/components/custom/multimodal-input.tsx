@@ -25,28 +25,28 @@ import useWindowSize from "./use-window-size";
 
 const suggestedActions = [
   {
-    title: "Check account balance",
-    label: "View checking, savings, and credit",
-    action: "Check balence in my bank account",
-    icon: "💰",
+    title: "Create ETH Indicator",
+    label: "Build 1-minute candlestick data indicator",
+    action: "Create an indicator that gives you 1 minute simulated candlestick data of ETH",
+    icon: "�",
   },
   {
-    title: "Transfer",
-    label: "Transfer 100 INR to my savings account",
-    action: "I wan't to transfer 100 INR to my other savings account",
-    icon: "🪙",
+    title: "Build Trading Strategy",
+    label: "Create a stop-loss strategy for ETH",
+    action: "Create a strategy that sells our Ethereum when it closes below $4014",
+    icon: "⚡",
   },
   {
-    title: "View transaction history",
-    label: "See recent account activity",
-    action: "View my transaction history",
+    title: "RSI Momentum Indicator",
+    label: "Calculate relative strength index",
+    action: "Create a RSI momentum indicator that calculates relative strength index for ETH over 14 periods",
     icon: "📊",
   },
   {
-    title: "Book an appointment",
-    label: "Book an appointment with the manager",
-    action: "I wan't to book an appointment.",
-    icon: "📅",
+    title: "Advanced Multi-Indicator Strategy",
+    label: "Complex strategy with multiple indicators",
+    action: "Create an advanced strategy that uses RSI, moving averages, and volume analysis to trade ETH with dynamic position sizing",
+    icon: "🧠",
   },
 ];
 
