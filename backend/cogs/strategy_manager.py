@@ -292,7 +292,7 @@ class StrategyManager:
 
         agent_name = agent.get('name', agent_id)
         port = random.randint(23000, 30000)
-        python_code = process_code(python_code, agent.get('function_agent_mapping', {}), port, agent_name)
+        python_code = process_code(python_code, agent.get('function_agent_mapping', {}), port, agent_name, agent_id)
 
         script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts", "run_python.sh")
 
@@ -321,7 +321,7 @@ class StrategyManager:
         process = self.running_agents.get(agent_id)
         return process and process.poll() is None
 
-def process_code(code: str, function_agent_mapping: dict, function_args_mapping: dict, port: int, agent_name: str = "default_agent"):
+def process_code(code: str, function_agent_mapping: dict, function_args_mapping: dict, port: int, agent_name: str, agent_id: str):
     inject_pattern = r'@inject_selected\(([^)]+)\)'
     match = re.search(inject_pattern, code)
     
@@ -410,6 +410,13 @@ def inject_selected(*func_names):
         injected_func.__doc__ = main_func.__doc__
         return injected_func
     return decorator
+
+def push(open, high, low, close, volume):
+    pubsub_db.insert_row({agent_id}, open_price, high_price, low_price, close_price, volume, "")
+
+def swap(fromCrypto, toCrypto, wallet_address, ammount):
+    return "successfully bought"
+
 
 '''
     
