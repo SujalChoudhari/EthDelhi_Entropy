@@ -1,8 +1,10 @@
 export const API_BASE = "http://localhost:8000/agents";
 
-export async function fetchStrategies(search?: string) {
+export async function fetchStrategies(search?: string, type?: string) {
   const params = new URLSearchParams();
-  params.append('type', 'string'); // Only fetch strategy-type agents
+  if (type) {
+    params.append('type', type); // Filter by agent type (strategy or indicator)
+  }
   if (search) {
     params.append('search', search);
   }

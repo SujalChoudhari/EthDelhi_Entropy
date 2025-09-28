@@ -11,6 +11,7 @@ import { Bot, User } from "lucide-react";
 import { TransferMoney } from "../bank/transfer-money";
 import { BankAppointment } from "../bank/bank-appointment";
 import { StrategyCreator } from "../strategy/strategy-creator";
+import { IndicatorCreator } from "../strategy/indicator-creator";
 import { StrategyRecommender } from "../strategy/strategy-recommender";
 
 export const Message = ({
@@ -86,6 +87,8 @@ export const Message = ({
                       <BankAppointment appointmentData={result} />
                     ) : toolName === "createTradingStrategy" ? (
                       <StrategyCreator strategyData={result} />
+                    ) : toolName === "createIndicator" ? (
+                      <IndicatorCreator indicatorData={result} />
                     ) : toolName === "getStrategyRecommendations" ? (
                       <StrategyRecommender 
                         recommendationData={result}
@@ -124,6 +127,8 @@ export const Message = ({
                       <BankAppointment />
                     ) : toolName === "createTradingStrategy" ? (
                       <StrategyCreator />
+                    ) : toolName === "createIndicator" ? (
+                      <IndicatorCreator />
                     ) : toolName === "getStrategyRecommendations" ? (
                       <div className="space-y-4">
                         <div className="h-16 bg-muted/70 animate-pulse rounded-lg" />
