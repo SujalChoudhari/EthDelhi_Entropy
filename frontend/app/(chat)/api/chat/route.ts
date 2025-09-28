@@ -10,7 +10,7 @@ import {
   generateStrategyRecommendations,
   generateIndicator,
 } from "@/ai/actions";
-import { generateUUID, saveChat, getChatById } from "@/lib/utils";
+import {saveChat, getChatById } from "@/lib/utils";
 
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Array<Message> } =

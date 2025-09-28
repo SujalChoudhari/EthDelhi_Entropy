@@ -13,7 +13,6 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 
-import api from "@/utils/api";
 import { Mic, Paperclip, VideoIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -132,21 +131,6 @@ export function MultimodalInput({
 
     try {
       console.log('Sending request to upload file');
-      const response = await api(`files/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      console.log('Upload response:', response);
-      const data = response;
-      const { url, pathname, contentType } = data;
-
-      console.log('File uploaded successfully:', { url, pathname, contentType });
-      return {
-        url,
-        name: pathname,
-        contentType: contentType,
-      };
 
     } catch (error) {
       console.error('Error uploading file:', error);

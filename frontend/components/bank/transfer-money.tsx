@@ -5,7 +5,6 @@ import { ArrowRight, CheckCircle, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import api from "@/utils/api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -32,9 +31,6 @@ export function TransferMoney({
 
   useEffect(() => {
     const dataFetcher = async () => {
-      const accounts = (await api("accounts/find/"))["accounts"]
-      console.log(accounts)
-      transferData.accountOptions = accounts;
     }
 
 
