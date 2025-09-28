@@ -8,6 +8,7 @@ import {
   generateAppointmentDetails,
   generateTradingStrategy,
   generateStrategyRecommendations,
+  generateIndicator,
 } from "@/ai/actions";
 import {saveChat, getChatById } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
 - Keep your responses limited to a sentence or two  
 - DO NOT output lists unless specifically requested
 - For strategy creation: ALWAYS respond first with "Perfect! I'll create that trading algorithm for you." before calling tools
+- For indicator creation: ALWAYS respond first with "Great! I'll build that technical indicator for you." before calling tools
 - After tool calls complete, acknowledge what you're showing with a brief phrase
 - Today's date is ${new Date().toLocaleDateString()}
 - Ask follow-up questions to guide users into optimal workflows
@@ -51,6 +53,13 @@ export async function POST(request: Request) {
   - When users describe a trading strategy, FIRST respond with: "Perfect! I'll create that trading algorithm for you." then use the createTradingStrategy tool
   - Respond to queries like "I want to create a strategy that..." or "Help me build a bot that trades..."
   - Always provide immediate acknowledgment before tool calls for better user experience
+
+### Technical Indicator Creation:
+  - Generate technical analysis indicators (RSI, MACD, Moving Averages, Bollinger Bands, etc.)
+  - Convert indicator descriptions into Python code with push() calls
+  - When users describe an indicator, FIRST respond with: "Great! I'll build that technical indicator for you." then use the createIndicator tool
+  - Respond to queries like "I need an RSI indicator" or "Create a moving average crossover indicator"
+  - Indicators are building blocks that calculate and store OHLCV data for strategies to use
 
 ### Intelligent Strategy Recommendations:
   - When users ask for strategy recommendations, analyze their chat behavior unconsciously
@@ -175,6 +184,16 @@ export async function POST(request: Request) {
         execute: async ({ description }) => {
           const strategyData = await generateTradingStrategy(description);
           return strategyData;
+        },
+      },
+      createIndicator: {
+        description: "Generate Python code for a technical indicator (RSI, MACD, Moving Averages, Bollinger Bands, etc.) based on natural language description. Use this when users want to create indicators that calculate and store OHLCV data.",
+        parameters: z.object({
+          description: z.string().describe("Natural language description of the technical indicator the user wants to create (e.g., 'RSI oscillator', 'moving average crossover', 'MACD indicator')"),
+        }),
+        execute: async ({ description }) => {
+          const indicatorData = await generateIndicator(description);
+          return indicatorData;
         },
       },
 

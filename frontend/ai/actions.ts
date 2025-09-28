@@ -141,29 +141,97 @@ export async function generateAppointmentDetails(subject: string, context?: stri
   return appointmentDetails;
 }
 
-export async function generateTradingStrategy(description: string) {
+export async function generateIndicator(description: string) {
+  const { object: indicatorData } = await generateObject({
+    model: geminiFlashModel,
+    prompt: `Based on this indicator description: "${description}"
+    
+    Generate a complete Python indicator using the uAgent framework. The indicator should:
+    1. Calculate technical analysis data (moving averages, RSI, MACD, Bollinger Bands, etc.)
+    2. Use @inject_selected decorator if it needs to consume data from other indicators
+    3. Always call push(open, high, low, close, volume) to store calculated OHLCV data
+    4. Include proper error handling and mathematical calculations
+    5. Be clean code without comments
+    6. Focus on data calculation and storage, NOT trading decisions
+    7. Include @agent.on_event("startup") handler for initialization
+    
+    IMPORTANT: Indicators are building blocks that calculate and store data. They should:
+    - Calculate technical indicators (MA, RSI, MACD, etc.)
+    - Call push(open, high, low, close, volume) with calculated values
+    - NOT include swap() calls (those are for strategies)
+    - Store results in standardized OHLCV format for strategies to consume
+    
+    Available function: push(open, high, low, close, volume) - stores data to PubSub database
+    
+    Example structure:
+    @agent.on_event("startup")
+    async def startup(ctx: Context):
+        # Calculate indicator values
+        # Call push(open, high, low, close, volume)
+    `,
+    schema: z.object({
+      title: z.string().describe("Clear title for the indicator (e.g., 'Moving Average Crossover', 'RSI Oscillator')"),
+      description: z.string().describe("What the indicator calculates and measures"),
+      indicatorType: z.enum(["Trend", "Momentum", "Volume", "Volatility"]).describe("Category of technical analysis"),
+      complexity: z.enum(["Beginner", "Intermediate", "Advanced"]).describe("Calculation complexity level"),
+      pythonCode: z.string().describe("Complete Python code for the indicator with push() calls"),
+      outputDescription: z.string().describe("Description of what OHLCV data this indicator produces"),
+      keyFeatures: z.array(z.string()).describe("Key technical features and calculations"),
+      dependencies: z.array(z.string()).describe("Names of other indicators this depends on (if any)"),
+    }),
+  });
+
+  return indicatorData;
+}
+
+export async function generateTradingStrategy(description: string, availableIndicators: string[] = []) {
   const { object: strategyData } = await generateObject({
     model: geminiFlashModel,
     prompt: `Based on this trading strategy description: "${description}"
     
-    Generate a complete Python trading strategy using the ASI uAgent framework. The strategy should:
-    1. It should be without comments and clean.
-    2. Include proper error handling and risk management
-    3. Use realistic trading logic based on the description
-    4. Follow Python best practices
-    5. Include imports for common trading libraries (pandas, numpy, etc.)
-    6. Have clear entry and exit signals
+    Available indicators to inject: ${availableIndicators.length > 0 ? availableIndicators.join(", ") : "None available"}
     
-    Make the code professional and deployable on a decentralized trading platform.`,
+    Generate a complete Python trading strategy using the uAgent framework. The strategy should:
+    1. Use @inject_selected(["indicator1", "indicator2"]) to consume data from indicators
+    2. Include swap(fromCrypto, toCrypto, wallet_address, amount) function calls for trading execution
+    3. Make trading decisions based on injected indicator data
+    4. Include proper error handling and risk management
+    5. Be clean code without comments
+    6. Focus on trading logic, NOT data calculation (indicators handle that)
+    7. Include @agent.on_event("startup") handler for strategy logic
+    
+    IMPORTANT: Strategies consume indicator data and execute trades. They should:
+    - Use @inject_selected to get data from indicators
+    - Call swap(fromCrypto, toCrypto, wallet_address, amount) for trades
+    - NOT calculate indicators (use injected functions instead)
+    - Make decisions based on indicator signals
+    
+    Available function: swap(fromCrypto, toCrypto, wallet_address, amount) - executes crypto swaps
+    
+    Example structure:
+    @inject_selected(["ma_crossover", "rsi_signal"])
+    @agent.on_event("startup") 
+    async def strategy_logic(ctx: Context, ma_crossover, rsi_signal):
+        # Get indicator data
+        ma_data = ma_crossover()
+        rsi_data = rsi_signal()
+        # Make trading decisions
+        if condition:
+            swap("USDT", "BTC", wallet_address, 100)
+        elif other_condition:
+            swap("BTC", "USDT", wallet_address, 0.01)
+    `,
     schema: z.object({
       title: z.string().describe("A clear, concise title for the strategy"),
       description: z.string().describe("A refined description of what the strategy does"),
       riskLevel: z.enum(["Low", "Medium", "High"]).describe("Risk level assessment of the strategy"),
       complexity: z.enum(["Beginner", "Intermediate", "Advanced"]).describe("Technical complexity level"),
-      pythonCode: z.string().describe("Complete Python code for the trading strategy"),
+      pythonCode: z.string().describe("Complete Python code for the trading strategy with @inject_selected"),
       estimatedGas: z.number().describe("Estimated gas cost for deployment (realistic estimate)"),
       keyFeatures: z.array(z.string()).describe("Key features and highlights of the strategy"),
       recommendedCapital: z.number().describe("Recommended minimum capital in USD"),
+      requiredIndicators: z.array(z.string()).describe("Names of indicators this strategy depends on"),
+      tradingSignals: z.array(z.string()).describe("Key trading signals the strategy responds to"),
     }),
   });
 
