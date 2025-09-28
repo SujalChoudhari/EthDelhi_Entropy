@@ -32,12 +32,12 @@ interface StrategyCreatorProps {
 }
 
 export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deploying' | 'success' | 'error'>('idle');
+  const [isCreating, setIsCreating] = useState(false);
+  const [creationStatus, setCreationStatus] = useState<'idle' | 'creating' | 'success' | 'error'>('idle');
   const [code, setCode] = useState(strategyData?.pythonCode || '');
-  const [deployedAgentId, setDeployedAgentId] = useState<string | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
-  const [startStatus, setStartStatus] = useState<'idle' | 'starting' | 'running' | 'error'>('idle');
+  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployStatus, setDeployStatus] = useState<'idle' | 'deploying' | 'deployed' | 'error'>('idle');
 
   // Show loading skeleton if no data provided
   if (!strategyData) {
@@ -59,12 +59,12 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
 
   const { title, description, riskLevel, pythonCode, estimatedGas, complexity } = strategyData;
 
-  const handleDeploy = async () => {
-    setIsDeploying(true);
-    setDeploymentStatus('deploying');
+  const handleCreateAgent = async () => {
+    setIsCreating(true);
+    setCreationStatus('creating');
     
     try {
-      // Deploy to your FastAPI backend
+      // Create agent via FastAPI backend
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const response = await fetch(`${apiUrl}/agents/`, {
         method: 'POST',
@@ -77,22 +77,71 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
           title: title,
           summary: description,
           description: `Risk Level: ${riskLevel}, Complexity: ${complexity}. ${description}`,
-          monthlyFee: estimatedGas ? estimatedGas / 100000 : 0.1, // Convert gas to fee estimate
+          type: "strategy", // Set as strategy type
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
-        setDeploymentStatus('success');
-        setDeployedAgentId(result.agent_id);
-        toast.success(`Strategy deployed successfully! Agent ID: ${result.agent_id}`);
-        console.log('Agent deployed:', result);
+        setCreationStatus('success');
+        setCreatedAgentId(result.agent_id);
+        toast.success(`Agent created successfully! Agent ID: ${result.agent_id}`);
+        console.log('Agent created:', result);
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || 'Deployment failed');
+        throw new Error(errorData.message || 'Agent creation failed');
       }
     } catch (error) {
-      setDeploymentStatus('error');
+      setCreationStatus('error');
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Cannot connect to backend. Please ensure the FastAPI server is running on port 8000.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(`Failed to create agent: ${errorMessage}`);
+      console.error('Agent creation error:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeployStrategy = async () => {
+    if (!createdAgentId) {
+      toast.error('Please create the agent first');
+      return;
+    }
+
+    setIsDeploying(true);
+    setDeployStatus('deploying');
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/agents/deploy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agent_id: createdAgentId,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setDeployStatus('deployed');
+        toast.success(`Strategy deployed successfully! ${result.status}`);
+        console.log('Agent deployed:', result);
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(errorData.detail || 'Failed to deploy agent');
+      }
+    } catch (error) {
+      setDeployStatus('error');
       let errorMessage = 'Unknown error occurred';
       
       if (error instanceof Error) {
@@ -104,55 +153,9 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
       }
       
       toast.error(`Failed to deploy strategy: ${errorMessage}`);
-      console.error('Deployment error:', error);
+      console.error('Deploy strategy error:', error);
     } finally {
       setIsDeploying(false);
-    }
-  };
-
-  const handleStartStrategy = async () => {
-    if (!deployedAgentId) {
-      toast.error('Please deploy the strategy first');
-      return;
-    }
-
-    setIsStarting(true);
-    setStartStatus('starting');
-    
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/agents/${deployedAgentId}/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setStartStatus('running');
-        toast.success(`Strategy started successfully! ${result.message}`);
-        console.log('Agent started:', result);
-      } else {
-        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        throw new Error(errorData.detail || 'Failed to start agent');
-      }
-    } catch (error) {
-      setStartStatus('error');
-      let errorMessage = 'Unknown error occurred';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('fetch')) {
-          errorMessage = 'Cannot connect to backend. Please ensure the FastAPI server is running on port 8000.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      toast.error(`Failed to start strategy: ${errorMessage}`);
-      console.error('Start strategy error:', error);
-    } finally {
-      setIsStarting(false);
     }
   };
 
@@ -281,72 +284,71 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Start Strategy Button */}
+            {/* Deploy Strategy Button */}
             <Button
-              onClick={handleStartStrategy}
+              onClick={handleDeployStrategy}
               variant="default"
               className="flex-1 h-12 text-sm font-medium"
-              disabled={isDeploying || !code.trim() || deploymentStatus !== 'success' || isStarting || startStatus === 'running'}
+              disabled={isCreating || !code.trim() || creationStatus !== 'success' || isDeploying || deployStatus === 'deployed'}
             >
-              {isStarting ? (
+              {isDeploying ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Starting...
+                  Deploying...
                 </>
-              ) : startStatus === 'running' ? (
+              ) : deployStatus === 'deployed' ? (
                 <>
                   <div className="h-2 w-2 mr-2 bg-green-500 rounded-full animate-pulse"></div>
-                  Running
+                  Deployed
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Start Strategy
+                  Deploy Strategy
                 </>
               )}
             </Button>
 
-            {/* Deploy Button */}
-            {/* Add code validation */}
+            {/* Create Agent Button */}
             <Button
-              onClick={handleDeploy}
-              disabled={isDeploying || !code.trim() || deploymentStatus === 'success'}
+              onClick={handleCreateAgent}
+              disabled={isCreating || !code.trim() || creationStatus === 'success'}
               className="flex-1 h-12 text-sm font-medium"
-              variant={deploymentStatus === 'success' ? 'secondary' : deploymentStatus === 'error' ? 'destructive' : 'secondary'}
+              variant={creationStatus === 'success' ? 'secondary' : creationStatus === 'error' ? 'destructive' : 'secondary'}
             >
-              {deploymentStatus === 'deploying' && (
+              {creationStatus === 'creating' && (
                 <>
                   <motion.div
                     className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   />
-                  Deploying...
+                  Creating Agent...
                 </>
               )}
-              {deploymentStatus === 'success' && (
+              {creationStatus === 'success' && (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Deployed Successfully!
+                  Agent Created!
                 </>
               )}
-              {deploymentStatus === 'error' && (
+              {creationStatus === 'error' && (
                 <>
                   <AlertCircle className="h-4 w-4 mr-2" />
-                  Deployment Failed
+                  Creation Failed
                 </>
               )}
-              {deploymentStatus === 'idle' && (
+              {creationStatus === 'idle' && (
                 <>
                   <Rocket className="h-4 w-4 mr-2" />
-                  Deploy Strategy
+                  Create Agent
                 </>
               )}
             </Button>
           </div>
 
-          {/* Success Message */}
-          {deploymentStatus === 'success' && (
+          {/* Agent Creation Success Message */}
+          {creationStatus === 'success' && (
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -356,14 +358,14 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
                 <CheckCircle className="h-5 w-5 text-primary mr-3" />
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    Strategy Deployed Successfully!
+                    Agent Created Successfully!
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Your trading strategy is now live on the Entropy Engine marketplace.
+                    Your trading agent is now created and ready to deploy.
                   </p>
-                  {deployedAgentId && (
+                  {createdAgentId && (
                     <p className="text-xs text-muted-foreground mt-1 font-mono">
-                      Agent ID: <span className="text-primary font-medium">{deployedAgentId}</span>
+                      Agent ID: <span className="text-primary font-medium">{createdAgentId}</span>
                     </p>
                   )}
                 </div>
@@ -371,8 +373,8 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
             </motion.div>
           )}
 
-          {/* Start Strategy Status Messages */}
-          {startStatus === 'running' && (
+          {/* Deploy Strategy Status Messages */}
+          {deployStatus === 'deployed' && (
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -382,17 +384,17 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
                 <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse mr-3"></div>
                 <div>
                   <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                    Strategy Running
+                    Strategy Deployed
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    Your trading strategy is actively executing trades.
+                    Your trading strategy is now live and actively executing.
                   </p>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {startStatus === 'error' && (
+          {deployStatus === 'error' && (
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -402,7 +404,7 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
                 <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
                 <div>
                   <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                    Failed to Start Strategy
+                    Failed to Deploy Strategy
                   </p>
                   <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                     Please check your backend connection and try again.
