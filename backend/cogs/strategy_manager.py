@@ -360,7 +360,7 @@ def inject_selected(*func_names):
     return decorator
 
 def push(open, high, low, close, volume):
-    pubsub.insert_row({agent_id}, open_price, high_price, low_price, close_price, volume, "")
+    pubsub.insert_row("{agent_id}", open, high, low, close, volume, "")
 
 def swap(fromCrypto, toCrypto, wallet_address, ammount):
     return "successfully bought"
@@ -369,7 +369,29 @@ def swap(fromCrypto, toCrypto, wallet_address, ammount):
 '''
     
     if not match:
-        injected_code = decorator_impl
+        injected_code = f'''from functools import wraps
+from uagents import Agent, Context, Model
+from cogs.database import PubSubDatabase
+
+class Request(Model): 
+    message: str 
+
+agent = Agent( 
+    name="{agent_name}", 
+    port={port}, 
+    endpoint=["http://localhost:{port}/submit"] 
+)
+
+pubsub = PubSubDatabase()
+
+def push(open, high, low, close, volume):
+    pubsub.insert_row("{agent_id}", open, high, low, close, volume, "")
+
+def swap(fromCrypto, toCrypto, wallet_address, ammount):
+    return "successfully bought"
+
+
+'''
         injected_code += code
         return injected_code
     
@@ -423,8 +445,9 @@ def swap(fromCrypto, toCrypto, wallet_address, ammount):
     available_functions_dict += "}\n"
     
     injected_code = decorator_impl
-    injected_code += "\n\n".join(function_implementations) + "\n\n"
-    injected_code += available_functions_dict + "\n"
+    if len(function_implementations) > 0:
+        injected_code += "\n\n".join(function_implementations) + "\n\n"
+        injected_code += available_functions_dict + "\n"
     injected_code += code
     
     return injected_code
