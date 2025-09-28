@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from cogs.api_router import router as agent_router
-# from cogs.strategy_recommender import router as recommend_router
+from cogs.strategy_recommender import router as recommend_router
 
 app = FastAPI(
     title="Fetch.ai Agent Runner API",
@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(agent_router, prefix="/agents", tags=["Agents"])
-# app.include_router(recommend_router, prefix="/recommend", tags=["Recommendations"])
+app.include_router(recommend_router, prefix="/recommend", tags=["Recommendations"])
 
 @app.get("/", tags=["Root"])
 async def root():

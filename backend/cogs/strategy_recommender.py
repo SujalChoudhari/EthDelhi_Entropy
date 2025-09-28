@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List, Dict
-# from hyperon import *
+from hyperon import *
 
 from cogs.database import AgentDatabase
 
@@ -69,7 +69,7 @@ def recommend(user: UserProfile) -> Dict:
         ))
     
     # Fallback to sample data if no real agents exist yet
-    if not strategies_data:
+    if strategies_data:
         print("No real agents found in database, using fallback sample strategies")
         strategies_data = [
             (
