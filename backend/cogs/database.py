@@ -35,7 +35,8 @@ class AgentDatabase:
                     title TEXT,
                     summary TEXT,
                     description TEXT,
-                    type TEXT
+                    type TEXT,
+                    function_agent_mapping TEXT
                 )
                 """
             )
@@ -60,7 +61,8 @@ class AgentDatabase:
                   title: str = None, 
                   summary: str = None, 
                   description: str = None,
-                  type:str = None ):
+                  type: str = None,
+                  function_agent_mapping: str = None):
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             c.execute(
@@ -68,13 +70,13 @@ class AgentDatabase:
                 INSERT INTO agents (
                     agent_id, code, agentverse_id, 
                     risk, assetClass, time, currentStateOfMarket, interest, perf, isNew, reputation,
-                    name, creator, title, summary, description, type
+                    name, creator, title, summary, description, type, function_agent_mapping
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (agent_id, code, agentverse_id, 
                  risk, assetClass, time, currentStateOfMarket, interest, perf, isNew, reputation,
-                 name, creator, title, summary, description, type),
+                 name, creator, title, summary, description, type, function_agent_mapping),
             )
             conn.commit()
 

@@ -81,6 +81,7 @@ class StrategyManager:
                 "summary": row.get("summary"),
                 "description": row.get("description"),
                 "type": row.get("type"),
+                "function_agent_mapping": row.get("function_agent_mapping"),
             }
         
         self.running_agents = {}
@@ -105,6 +106,7 @@ class StrategyManager:
         summary: str = None,
         description: str = None,
         type: str = None,
+        function_agent_mapping: str = None,
     ) -> str:
         agent_id = str(uuid.uuid4())
         self.agents[agent_id] = {
@@ -129,10 +131,11 @@ class StrategyManager:
             "summary": summary,
             "description": description,
             "type": type,
+            "function_agent_mapping": function_agent_mapping,
         }
         self.db.add_agent(
             agent_id, code, agentverse_id, risk, assetClass, time, currentStateOfMarket, interest, perf, isNew, reputation,
-            name, creator, title, summary, description, type
+            name, creator, title, summary, description, type, function_agent_mapping
         )
         return agent_id
 
@@ -198,6 +201,21 @@ class StrategyManager:
             "status": agent["status"],
             "code": agent["code"],
             "agentverse_id": agent.get("agentverse_id"),
+            "risk": agent.get("risk"),
+            "assetClass": agent.get("assetClass"),
+            "time": agent.get("time"),
+            "currentStateOfMarket": agent.get("currentStateOfMarket"),
+            "interest": agent.get("interest"),
+            "perf": agent.get("perf"),
+            "isNew": agent.get("isNew"),
+            "reputation": agent.get("reputation"),
+            "name": agent.get("name"),
+            "creator": agent.get("creator"),
+            "title": agent.get("title"),
+            "summary": agent.get("summary"),
+            "description": agent.get("description"),
+            "type": agent.get("type"),
+            "function_agent_mapping": agent.get("function_agent_mapping"),
         }
 
     def list_agents(self, search: str = None, type: str = None) -> list:
