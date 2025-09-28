@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 
-import api from "@/utils/api";
 import { useEffect, useState } from "react";
 
 type AccountBalanceProps = {
@@ -60,8 +59,6 @@ export function AccountBalance({ balanceData }: AccountBalanceProps) {
 
   useEffect(() => {
     const dataFetcher = async () => {
-      const accounts = await api("accounts/find/");
-      setData(accounts["accounts"]);
     }
 
     dataFetcher();

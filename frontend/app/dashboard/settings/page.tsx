@@ -31,7 +31,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { themes } from "@/types/theme";
-import api from "@/utils/api";
 import { toast } from "sonner";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 
@@ -208,18 +207,7 @@ const ProfileSection = ({
             Cancel
           </Button>
           <Button
-            onClick={async () => {
-              try {
-                const response = await api(`/users/${user.user_id}?first_name=${encodeURIComponent(editableUser.first_name)}&last_name=${encodeURIComponent(editableUser.last_name)}&age=${editableUser.age}&gender=${encodeURIComponent(editableUser.gender)}&phone_number=${encodeURIComponent(editableUser.phoneNumber)}&address=${encodeURIComponent(editableUser.address)}&email=${encodeURIComponent(editableUser.email)}`, {
-                  method: "PUT",
-                });
-                toast.success("Profile updated successfully!");
-                setIsEditing(false);
-              } catch (error) {
-                toast.error("Failed to update profile.");
-                console.error("Error updating profile:", error);
-              }
-            }}
+            onClick={async () => {}}
           >
             Save Changes
           </Button>

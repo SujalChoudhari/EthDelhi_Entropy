@@ -9,7 +9,7 @@ import { Weather } from "./weather";
 import { AccountBalance } from "../bank/account-balance";
 import { Bot, User } from "lucide-react";
 import { TransferMoney } from "../bank/transfer-money";
-import { BankAppointment } from "../bank/bank-appointment";
+import BankAppointment  from "../bank/bank-appointment";
 import { StrategyCreator } from "../strategy/strategy-creator";
 import { StrategyRecommender } from "../strategy/strategy-recommender";
 
@@ -83,6 +83,7 @@ export const Message = ({
                     ) : toolName === "transferMoney" ? (
                       <TransferMoney transferData={result} />
                     ) : toolName === "scheduleAppointment" ? (
+                      // @ts-ignore
                       <BankAppointment appointmentData={result} />
                     ) : toolName === "createTradingStrategy" ? (
                       <StrategyCreator strategyData={result} />
