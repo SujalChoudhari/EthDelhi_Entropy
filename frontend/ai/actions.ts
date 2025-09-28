@@ -154,6 +154,8 @@ export async function generateIndicator(description: string) {
     5. Be clean code without comments
     6. Focus on data calculation and storage, NOT trading decisions
     7. Include @agent.on_event("startup") handler for initialization
+    8. DO NOT use classes - use functions only
+    9. Follow the structure pattern shown in the example below
     
     IMPORTANT: Indicators are building blocks that calculate and store data. They should:
     - Calculate technical indicators (MA, RSI, MACD, etc.)
@@ -163,11 +165,29 @@ export async function generateIndicator(description: string) {
     
     Available function: push(open, high, low, close, volume) - stores data to PubSub database
     
-    Example structure:
+    Example ETH 1-minute candlestick indicator structure:
+    import time
+    import random
+
     @agent.on_event("startup")
-    async def startup(ctx: Context):
-        # Calculate indicator values
-        # Call push(open, high, low, close, volume)
+    @inject_selected()
+    async def start_strategy(ctx: Context, foo=None, bar=None, baz=None):
+        ctx.logger.info(f"Starting Indicator")
+
+        while True:
+            push(
+                random.randint(1, 10),
+                random.randint(1, 10),
+                random.randint(1, 10),
+                random.randint(1, 10),
+                random.randint(1, 10),
+            )
+            time.sleep(2)
+
+    if __name__ == "__main__":
+        agent.run()
+    
+    Follow this pattern but replace random values with actual indicator calculations for ETH prices.
     `,
     schema: z.object({
       title: z.string().describe("Clear title for the indicator (e.g., 'Moving Average Crossover', 'RSI Oscillator')"),
@@ -199,6 +219,8 @@ export async function generateTradingStrategy(description: string, availableIndi
     5. Be clean code without comments
     6. Focus on trading logic, NOT data calculation (indicators handle that)
     7. Include @agent.on_event("startup") handler for strategy logic
+    8. DO NOT use classes - use functions only
+    9. Follow the structure pattern shown in the example below
     
     IMPORTANT: Strategies consume indicator data and execute trades. They should:
     - Use @inject_selected to get data from indicators
@@ -206,20 +228,36 @@ export async function generateTradingStrategy(description: string, availableIndi
     - NOT calculate indicators (use injected functions instead)
     - Make decisions based on indicator signals
     
-    Available function: swap(fromCrypto, toCrypto, wallet_address, amount) - executes crypto swaps
+    Available functions: 
+    - swap(fromCrypto, toCrypto, wallet_address, amount) - executes crypto swaps
+    - Injected indicator functions from @inject_selected
     
-    Example structure:
-    @inject_selected(["ma_crossover", "rsi_signal"])
-    @agent.on_event("startup") 
-    async def strategy_logic(ctx: Context, ma_crossover, rsi_signal):
-        # Get indicator data
-        ma_data = ma_crossover()
-        rsi_data = rsi_signal()
-        # Make trading decisions
-        if condition:
-            swap("USDT", "BTC", wallet_address, 100)
-        elif other_condition:
-            swap("BTC", "USDT", wallet_address, 0.01)
+    Example ETH strategy structure (adapt this pattern):
+    import time
+    import random
+
+    @agent.on_event("startup")
+    @inject_selected()
+    async def start_strategy(ctx: Context, foo=None, bar=None, baz=None):
+        ctx.logger.info(f"Starting Strategy")
+
+        while True:
+            # Get data from injected indicators
+            if foo:
+                indicator_data = foo()
+                
+            # Make trading decisions based on indicator data
+            if some_condition:
+                swap("ETH", "USDT", wallet_address, 0.1)
+            elif another_condition:
+                swap("USDT", "ETH", wallet_address, 100)
+                
+            time.sleep(60)  # Check every minute
+
+    if __name__ == "__main__":
+        agent.run()
+    
+    Follow this pattern but replace with actual strategy logic for ETH trading decisions.
     `,
     schema: z.object({
       title: z.string().describe("A clear, concise title for the strategy"),
