@@ -152,10 +152,10 @@ class AgentDatabase:
             col_names = [desc[0] for desc in c.description]
             return [dict(zip(col_names, row)) for row in rows]
 
-    def update_happiness(self, agent_id: str, happiness: int):
+    def update_reputation(self, agent_id: str, reputation: int):
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
-            c.execute("UPDATE agents SET happiness = ? WHERE agent_id = ?", (happiness, agent_id))
+            c.execute("UPDATE agents SET reputation = ? WHERE agent_id = ?", (reputation, agent_id))
             conn.commit()
 
 class PubSubDatabase:

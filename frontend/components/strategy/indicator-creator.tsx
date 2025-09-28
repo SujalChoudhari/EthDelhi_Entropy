@@ -369,13 +369,13 @@ export function IndicatorCreator({ indicatorData }: IndicatorCreatorProps) {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   />
-                  Creating Indicator...
+                  Creating Agent...
                 </>
               )}
               {creationStatus === 'success' && (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Indicator Created!
+                  Agent Created!
                 </>
               )}
               {creationStatus === 'error' && (
@@ -387,13 +387,13 @@ export function IndicatorCreator({ indicatorData }: IndicatorCreatorProps) {
               {creationStatus === 'idle' && (
                 <>
                   <Rocket className="h-4 w-4 mr-2" />
-                  Create Indicator
+                  Create Agent
                 </>
               )}
             </Button>
           </div>
 
-          {/* Indicator Creation Success Message */}
+          {/* Agent Creation Success Message */}
           {creationStatus === 'success' && (
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -404,14 +404,14 @@ export function IndicatorCreator({ indicatorData }: IndicatorCreatorProps) {
                 <CheckCircle className="h-5 w-5 text-primary mr-3" />
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    Indicator Created Successfully!
+                    Agent Created Successfully!
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Your indicator is now created and ready to deploy for data calculation.
+                    Your trading agent is now created and ready to deploy.
                   </p>
                   {createdAgentId && (
                     <p className="text-xs text-muted-foreground mt-1 font-mono">
-                      Indicator ID: <span className="text-primary font-medium">{createdAgentId}</span>
+                      Agent ID: <span className="text-primary font-medium">{createdAgentId}</span>
                     </p>
                   )}
                 </div>
@@ -419,21 +419,21 @@ export function IndicatorCreator({ indicatorData }: IndicatorCreatorProps) {
             </motion.div>
           )}
 
-          {/* Deploy Indicator Status Messages */}
+          {/* Deploy Strategy Status Messages */}
           {deployStatus === 'deployed' && (
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg"
+              className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg"
             >
               <div className="flex items-center">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse mr-3"></div>
+                <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse mr-3"></div>
                 <div>
-                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                    Indicator Deployed
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    Strategy Deployed
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    Your indicator is now live and calculating data for strategies to use.
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    Your trading strategy is now live and actively executing.
                   </p>
                 </div>
               </div>
@@ -450,7 +450,7 @@ export function IndicatorCreator({ indicatorData }: IndicatorCreatorProps) {
                 <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
                 <div>
                   <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                    Failed to Deploy Indicator
+                    Failed to Deploy Strategy
                   </p>
                   <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                     Please check your backend connection and try again.

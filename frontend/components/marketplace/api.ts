@@ -16,12 +16,12 @@ export async function fetchStrategies(search?: string, type?: string) {
   return data.agents;
 }
 
-export async function updateHappiness(agentId: string, happiness: number) {
-  const res = await fetch(`${API_BASE}/${agentId}/happiness`, {
+export async function updateReputation(agentId: string, reputation: number) {
+  const res = await fetch(`${API_BASE}/${agentId}/reputation`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ happiness }),
+    body: JSON.stringify({ reputation }),
   });
-  if (!res.ok) throw new Error("Failed to update happiness");
+  if (!res.ok) throw new Error("Failed to update reputation");
   return res.json();
 }

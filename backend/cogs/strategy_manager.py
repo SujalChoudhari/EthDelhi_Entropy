@@ -222,12 +222,12 @@ class StrategyManager:
         # Use DB for search and listing with type filter
         agents = self.db.list_agents(search=search, type=type)
         return agents
-    def update_happiness(self, agent_id: str, happiness: int) -> bool:
+    def update_reputation(self, agent_id: str, reputation: int) -> bool:
         agent = self.agents.get(agent_id)
         if not agent:
             return False
-        agent["happiness"] = happiness
-        self.db.update_happiness(agent_id, happiness)
+        agent["reputation"] = reputation
+        self.db.update_reputation(agent_id, reputation)
         return True
 
     def get_logs(self, agent_id: str) -> str | None:

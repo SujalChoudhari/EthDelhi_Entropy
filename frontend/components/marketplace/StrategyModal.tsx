@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Strategy, DeploymentData } from './types';
 import { Users, TrendingUp, DollarSign, Shield, Zap, Plug } from 'lucide-react'; 
 import StatCard from './StatCard';
-import { updateHappiness } from './api';
+import { updateReputation } from './api';
 // use the shared hooks from the frontend hooks folder
 import { useMetamask } from '@/hooks/useMetamask';
 import { useStrategyRatingsContract } from '@/hooks/useStrategyRatingsContract';
@@ -75,7 +75,7 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ strategy, onClose }) => {
     if (strategy && strategy.agent_id) {
       // 1. Always update backend first (works without wallet)
       try {
-        await updateHappiness(strategy.agent_id, rating);
+        await updateReputation(strategy.agent_id, rating);
       } catch (e) {
         console.error("Backend rating update failed:", e);
         // Let user proceed even if backend fails

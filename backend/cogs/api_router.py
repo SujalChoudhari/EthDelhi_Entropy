@@ -28,8 +28,8 @@ class AgentCode(BaseModel):
     description: Optional[str] = None
     type: Optional[str] = None
 
-class HappinessUpdate(BaseModel):
-    happiness: int
+class ReputationUpdate(BaseModel):
+    reputation: int
 
 
 # Handle preflight OPTIONS request
@@ -71,12 +71,12 @@ async def list_agents(search: str = None, type: str = None):
 async def search_agents(q: str):
     agents = manager.list_agents(search=q)
     return {"agents": agents}
-# Add endpoint to update happiness/reactions
-@router.post("/{agent_id}/happiness")
-async def update_happiness(agent_id: str, payload: HappinessUpdate):
-    if not manager.update_happiness(agent_id, payload.happiness):
+# Add endpoint to update reputation/reactions
+@router.post("/{agent_id}/reputation")
+async def update_reputation(agent_id: str, payload: ReputationUpdate):
+    if not manager.update_reputation(agent_id, payload.reputation):
         raise HTTPException(status_code=404, detail="Agent not found")
-    return {"agent_id": agent_id, "happiness": payload.happiness, "message": "Happiness updated"}
+    return {"agent_id": agent_id, "reputation": payload.reputation, "message": "Reputation updated"}
 
 
 @router.get("/{agent_id}")
