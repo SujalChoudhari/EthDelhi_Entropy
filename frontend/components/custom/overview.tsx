@@ -20,7 +20,7 @@ export const Overview = () => {
         </div>
         <div>
 
-          Vyom powered by the Google Gemini
+          Hunch
 
         </div>
       </div>

@@ -25,6 +25,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 
+interface Indicator {
+  agent_id: string;
+  title?: string;
+  name?: string;
+  summary?: string;
+  description?: string;
+  type?: string;
+}
+
 interface StrategyCreatorProps {
   strategyData?: {
     title: string;
@@ -47,7 +56,7 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
   const [deployStatus, setDeployStatus] = useState<'idle' | 'deploying' | 'deployed' | 'error'>('idle');
   
   // Indicator dependency management
-  const [availableIndicators, setAvailableIndicators] = useState<any[]>([]);
+  const [availableIndicators, setAvailableIndicators] = useState<Indicator[]>([]);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(strategyData?.requiredIndicators || []);
   const [isLoadingIndicators, setIsLoadingIndicators] = useState(false);
 
@@ -60,10 +69,15 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
         const response = await fetch(`${apiUrl}/agents/?type=indicator`);
         if (response.ok) {
           const indicators = await response.json();
-          setAvailableIndicators(indicators);
+          // Ensure indicators is always an array
+          setAvailableIndicators(Array.isArray(indicators) ? indicators : []);
+        } else {
+          console.error('Failed to fetch indicators:', response.status, response.statusText);
+          setAvailableIndicators([]);
         }
       } catch (error) {
         console.error('Failed to load indicators:', error);
+        setAvailableIndicators([]);
       } finally {
         setIsLoadingIndicators(false);
       }
@@ -108,8 +122,10 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
     try {
       // Create function agent mapping from selected indicators
       const functionAgentMapping = selectedIndicators.reduce((acc, indicatorId) => {
-        const indicator = availableIndicators.find(ind => ind.agent_id === indicatorId);
-        if (indicator) {
+        const indicator = Array.isArray(availableIndicators) 
+          ? availableIndicators.find(ind => ind.agent_id === indicatorId)
+          : null;
+        if (indicator && indicator.title) {
           // Use a simplified function name based on indicator title
           const functionName = indicator.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
           acc[functionName] = indicatorId;
@@ -334,7 +350,7 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading available indicators...
               </div>
-            ) : availableIndicators.length === 0 ? (
+            ) : !Array.isArray(availableIndicators) || availableIndicators.length === 0 ? (
               <div className="p-4 bg-muted rounded-lg text-center text-muted-foreground">
                 <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No indicators available</p>
@@ -378,7 +394,9 @@ export function StrategyCreator({ strategyData }: StrategyCreatorProps) {
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {selectedIndicators.map((indicatorId) => {
-                    const indicator = availableIndicators.find(ind => ind.agent_id === indicatorId);
+                    const indicator = Array.isArray(availableIndicators) 
+                      ? availableIndicators.find(ind => ind.agent_id === indicatorId)
+                      : null;
                     return (
                       <Badge key={indicatorId} variant="secondary" className="text-xs">
                         {indicator?.title || indicator?.name || indicatorId}
