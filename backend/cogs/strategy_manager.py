@@ -412,7 +412,7 @@ def inject_selected(*func_names):
     return decorator
 
 def push(open, high, low, close, volume):
-    pubsub_db.insert_row({agent_id}, open_price, high_price, low_price, close_price, volume, "")
+    pubsub.insert_row({agent_id}, open_price, high_price, low_price, close_price, volume, "")
 
 def swap(fromCrypto, toCrypto, wallet_address, ammount):
     return "successfully bought"
